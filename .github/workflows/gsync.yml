@@ -1,0 +1,138 @@
+name: _Sync CI
+
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - '**'
+      - '.github/workflows/gsync.yml'
+  pull_request:
+    branches: [ main, master ]
+    paths:
+      - '**'
+      - '.github/workflows/gsync.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Pester batch (fail-closed)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup PowerShell
+        uses: PowerShell/PowerShell-Action@v1
+        with:
+          version: '7.x'
+
+      - name: Install Pester
+        shell: pwsh
+        run: |
+          Set-PSRepository PSGallery -InstallationPolicy Trusted
+          Install-Module Pester -MinimumVersion 5.0.0 -Scope CurrentUser -Force -SkipPublisherCheck
+
+      - name: Run Pester batch
+        shell: pwsh
+        run: |
+          # Run-Tests.ps1 reports the verdict through its EXIT CODE. A
+          # try/catch only catches terminating errors, so the code was never
+          # inspected and a failing suite still passed the job.
+          & pwsh -NoProfile -NonInteractive -ExecutionPolicy Bypass -File ./Run-Tests.ps1 -OutputPath ./TestResults
+          $code = $LASTEXITCODE
+          if ($code -ne 0) {
+            Write-Error "_Sync test suite failed (exit code $code)"
+            exit $code
+          }
+
+      - name: Self-test gates
+        shell: pwsh
+        run: |
+          & pwsh -NoProfile -NonInteractive -ExecutionPolicy Bypass -File ./gsync.ps1 -SelfTest
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gsync-testresults
+          path: TestResults/**
+          retention-days: 14
+
+  ps51-smoke:
+    name: Windows PowerShell 5.1 smoke
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Windows PowerShell 5.1
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Set-PSRepository PSGallery -InstallationPolicy Trusted
+          Install-Module Pester -MinimumVersion 5.0.0 -Scope CurrentUser -Force -SkipPublisherCheck
+          & powershell -NoProfile -ExecutionPolicy Bypass -File ./gsync.ps1 -SelfTest
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+
+  sbom:
+    name: SBOM + provenance (CycloneDX)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup PowerShell
+        uses: PowerShell/PowerShell-Action@v1
+        with:
+          version: '7.x'
+
+      - name: Generate SBOM and check the policy gate
+        shell: pwsh
+        run: |
+          Import-Module ./Modules/SupplyChain.psm1 -Force -Global -DisableNameChecking
+          $root = (Get-Item -LiteralPath $env:GITHUB_WORKSPACE).FullName
+          $sbomPath = New-SyncSbom -Root $root -ToolName 'gsync'
+          Write-Host "SBOM written to $sbomPath"
+          $gate = Invoke-SyncSbomPolicyGate -SbomPath $sbomPath -Root $root
+          if (-not $gate.Passed) {
+            $gate.Violations | ForEach-Object { Write-Error "$($_.Component)@$($_.Version) denied by $($_.Rule)" }
+            exit 1
+          }
+
+      - name: Upload SBOM
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gsync-sbom
+          path: build-reports/**
+          retention-days: 14
+
+  otel:
+    name: OTLP telemetry export
+    runs-on: ubuntu-latest
+    if: ${{ secrets.OTEL_EXPORTER_OTLP_ENDPOINT != '' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PowerShell
+        uses: PowerShell/PowerShell-Action@v1
+        with:
+          version: '7.x'
+
+      - name: Export metrics over OTLP
+        shell: pwsh
+        env:
+          OTEL_EXPORTER_OTLP_ENDPOINT: ${{ secrets.OTEL_EXPORTER_OTLP_ENDPOINT }}
+        run: |
+          Import-Module ./Modules/Metrics.psm1 -Force -Global -DisableNameChecking
+          New-SyncMetricCounter -Name 'gsync_ci_run_total' -Help 'CI run counter'
+          Add-SyncMetric -Name 'gsync_ci_run_total' -Value 1
+          $ok = Push-MetricsOtlp -ServiceName 'gsync-ci'
+          if (-not $ok) { Write-Error 'OTLP export failed'; exit 1 }

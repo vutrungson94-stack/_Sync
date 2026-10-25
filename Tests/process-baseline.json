@@ -1,0 +1,49 @@
+{
+  "$schema": "./process-baseline.schema.json",
+  "description": "Sync process baseline",
+  "generatedAtUtc": "2026-10-20T17:31:02.8298182+07:00",
+  "adoptionFloor": {
+    "fileLockDelegation": {
+      "minAdoption": 1.0,
+      "measured": "0/0",
+      "metric": "lock FileStream sites outside SharedUtils",
+      "why": "Only SharedUtils opens a lock FileStream; every module calls Enter-BuildFileLock. The Semaphore primitive used by DeployTargets.Enter-DeployLock is a separate, machine-wide primitive and is intentionally not counted by this class (a lock here is cross-process, not a FileStream over a path)"
+    },
+    "eventNameRegistry": {
+      "minAdoption": 1.0,
+      "measured": "0/0",
+      "metric": "quoted EVT_* literals at production publish sites",
+      "why": "Publishers use the EventBus EVT_* constants instead of repeating the string"
+    },
+    "sharedUtilsImportOwner": {
+      "minAdoption": 1.0,
+      "measured": "0/0",
+      "metric": "inline Join-Path $PSScriptRoot SharedUtils.psm1 sites outside the exempt bootstrap root",
+      "why": "The lazy SharedUtils import has one owner in ModuleBootstrap.ps1 (Logging.psm1 is the bootstrap root and is registered exempt)"
+    },
+    "stringHashDelegation": {
+      "minAdoption": 1.0,
+      "measured": "0/0",
+      "metric": "production files that build a string hash inline: UTF8.GetBytes -> assigned variable -> ComputeHash(that variable) -> hex",
+      "why": "UTF8->SHA256->hex over a STRING goes through the shared Get-BuildStringHash; byte-stream file digests are a separate concern and are not counted"
+    },
+    "platformPathLiterals": {
+      "minAdoption": 0.98,
+      "measured": "49/50",
+      "metric": "files constructing a repository path with a backslash separator (production and test)",
+      "why": "No shipped file constructs a repository path with a hardcoded Windows backslash separator, so a path built here resolves on POSIX too (production Modules/Steps/Hooks AND the test suite are both scanned)"
+    },
+    "localeKeyWiring": {
+      "minAdoption": 0.0336,
+      "measured": "9/268",
+      "metric": "unreferenced locale keys",
+      "why": "Every shipped locale key is reachable from code (no translated strings nobody reads)"
+    },
+    "i18nProseCoverage": {
+      "minAdoption": 0.0,
+      "measured": "0/154",
+      "metric": "log emit sites whose message argument carries translatable English but no locale resolver",
+      "why": "User-facing log PROSE routes through a locale resolver (separators, ASCII art and relayed tool output are excluded from the denominator and counted as summary.EmitSitesNonProse; every emit verb is scanned at every position on the line, including Write-Host, Write-Warning and throw; production entry scripts at the tool root are in scope)"
+    }
+  }
+}

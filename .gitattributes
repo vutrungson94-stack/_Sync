@@ -1,0 +1,4 @@
+# Text files only; no LFS tracking required for this repo.
+# Uncomment and adjust if large binaries are added:
+# *.bin filter=lfs diff=lfs merge=lfs -text
+# *.apk filter=lfs diff=lfs merge=lfs -text

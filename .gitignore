@@ -1,0 +1,23 @@
+# _Sync runtime/test artifacts — never commit
+.gsync.log
+.gsync_*.log
+.gsync.state
+.gsync_*.state
+.gsync.rollback.log
+logs/
+.sync_snapshots/
+.sync_snapshots_test/
+TestResults/
+*.bak
+
+node_modules/
+bin/
+obj/
+publish-output/
+build-reports/
+*.log
+*.tmp
+.gbuildcache/
+.gbuild-state.gbuildstate
+.gbuild-state.gbuildstate.lock
+.gbuild/

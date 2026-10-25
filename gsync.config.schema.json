@@ -1,0 +1,239 @@
+﻿{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "gsync.config.json",
+  "type": "object",
+  "required": ["version", "git", "logging", "security"],
+  "properties": {
+    "version": {"type": "string"},
+    "sync": {
+      "type": "object",
+      "properties": {
+        "defaultStrategy": {"type": "string", "enum": ["full","quick"]},
+        "enableParallelSync": {"type": "boolean"},
+        "maxParallelRepos": {"type": "integer", "minimum": 1, "maximum": 64}
+      }
+    },
+    "git": {
+      "type": "object",
+      "required": ["remoteName","minVersion","retryCount"],
+      "properties": {
+        "remoteName": {"type": "string"},
+        "defaultBranchFallback": {"type": "string"},
+        "minVersion": {"type": "string"},
+        "retryCount": {"type": "integer", "minimum": 1, "maximum": 20},
+        "stashWhenWorkingTreeDirty": {"type": "boolean"},
+        "pullConflictPolicy": {"type": "string", "enum": ["ask","abort","rebase","merge"]}
+      }
+    },
+    "logging": {
+      "type": "object",
+      "properties": {
+        "level": {"type": "string", "enum": ["Verbose","Debug","Info","Warn","Error"]},
+        "enableFile": {"type": "boolean"},
+        "enableConsoleColor": {"type": "boolean"},
+        "enableJsonLog": {"type": "boolean"},
+        "maxLogFiles": {"type": "integer", "minimum": 1},
+        "maxLogSizeMB": {"type": "integer", "minimum": 1}
+      }
+    },
+    "security": {
+      "type": "object",
+      "required": ["enabled","blockOnMatch"],
+      "properties": {
+        "enabled": {"type": "boolean"},
+        "blockOnMatch": {"type": "boolean"},
+        "secretPatterns": {"type": "array", "items": {"type": "string"}},
+        "dangerousPatterns": {"type": "array", "items": {"type": "string"}},
+        "autoGitignore": {"type": "boolean"},
+        "redactPatterns": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name","pattern","replacement"],
+            "properties": {
+              "name": {"type": "string"},
+              "pattern": {"type": "string"},
+              "replacement": {"type": "string"}
+            }
+          }
+        },
+        "encryptStateFiles": {"type": "boolean"}
+      }
+    },
+    "gitignore": {
+      "type": "object",
+      "properties": {
+        "rulesToAdd": {"type": "array", "items": {"type": "string"}},
+        "smartIgnore": {"type": "boolean"}
+      }
+    },
+    "junkCleanup": {
+      "type": "object",
+      "required": ["enabled","patterns","restrictToDirs","confirmBeforeDelete"],
+      "properties": {
+        "enabled": {"type": "boolean"},
+        "patterns": {"type": "array", "items": {"type": "string"}},
+        "restrictToDirs": {"type": "array", "items": {"type": "string"}},
+        "confirmBeforeDelete": {"type": "boolean"}
+      }
+    },
+    "largeFiles": {
+      "type": "object",
+      "properties": {
+        "enabled": {"type": "boolean"},
+        "thresholdMB": {"type": "number", "minimum": 1},
+        "excludeDirs": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "gsyncIgnore": {
+      "type": "object",
+      "properties": {
+        "enabled": {"type": "boolean"},
+        "patterns": {"type": "array", "items": {"type": "string"}},
+        "autoLoadFile": {"type": "boolean"}
+      }
+    },
+    "autoCommit": {
+      "type": "object",
+      "properties": {
+        "enabled": {"type": "boolean"},
+        "smartStaging": {"type": "boolean"},
+        "autoCleanup": {"type": "boolean"},
+        "commitMessageTemplate": {"type": "string"},
+        "excludedExtensions": {"type": "array", "items": {"type": "string"}},
+        "excludedDirectories": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "webhook": {
+      "type": "object",
+      "properties": {
+        "enabled": {"type": "boolean"},
+        "url": {"type": "string"},
+        "onSuccess": {"type": "boolean"},
+        "onFailure": {"type": "boolean"}
+      }
+    },
+    "gpg": {"type": "object", "properties": {"signCommits": {"type": "boolean"}}},
+    "secretScan": {
+      "type": "object",
+      "properties": {
+        "enabled": {"type": "boolean"},
+        "blockOnMatch": {"type": "boolean"},
+        "extraPatterns": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "distributed": {
+      "type": "object",
+      "properties": {
+        "enabled": {"type": "boolean"},
+        "strategy": {"type": "string"},
+        "hosts": {"type": "array"}
+      }
+    },
+    "tenancy": {
+      "type": "object",
+      "properties": {
+        "tenantId": {"type": "string"},
+        "defaultTenant": {"type": "string"},
+        "isolation": {"type": "string", "enum": ["none","directory"]}
+      }
+    },
+    "hooks": {
+      "type": "object",
+      "properties": {
+        "preCommit": {"type": "array", "items": {"type": "string"}},
+        "postCommit": {"type": "array", "items": {"type": "string"}},
+        "prePush": {"type": "array", "items": {"type": "string"}},
+        "postPush": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "contentGate": {
+      "type": "object",
+      "properties": {
+        "enabled": {"type": "boolean"},
+        "runProjectGates": {"type": "boolean"},
+        "projectGates": {"type": "array", "items": {"type": "string"}},
+        "textExtensions": {"type": "array", "items": {"type": "string"}},
+        "maxFileMB": {"type": "integer", "minimum": 1, "maximum": 64}
+      }
+    },
+    "alerting": {
+      "type": "object",
+      "properties": {
+        "enabled": {"type": "boolean"},
+        "webhookUrl": {"type": "string"},
+        "minSeverity": {"type": "string", "enum": ["Info","Warn","Error"]},
+        "headers": {"type": "object"}
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "properties": {
+        "enabled": {"type": "boolean"},
+        "prometheusPort": {"type": "integer", "minimum": 1, "maximum": 65535},
+        "enableOtel": {"type": "boolean"}
+      }
+    },
+    "telemetry": {
+      "type": "object",
+      "properties": {
+        "enabled": {"type": "boolean"},
+        "anonymousOnly": {"type": "boolean"},
+        "collectSyncTimes": {"type": "boolean"},
+        "collectErrorStats": {"type": "boolean"},
+        "prometheus": {
+          "type": "object",
+          "properties": {
+            "enabled": {"type": "boolean"},
+            "port": {"type": "integer", "minimum": 1, "maximum": 65535},
+            "bindAddress": {"type": "string"},
+            "altPorts": {"type": "array", "items": {"type": "integer"}},
+            "metricsPath": {"type": "string"}
+          }
+        },
+        "otel": {
+          "type": "object",
+          "properties": {
+            "enabled": {"type": "boolean"},
+            "endpoint": {"type": "string"},
+            "metricsPath": {"type": "string"},
+            "tracesPath": {"type": "string"},
+            "jsonDepth": {"type": "integer", "minimum": 1, "maximum": 64}
+          }
+        }
+      }
+    },
+    "supplyChain": {
+      "type": "object",
+      "properties": {
+        "enabled": {"type": "boolean"},
+        "format": {"type": "string", "enum": ["cyclonedx"]},
+        "outputDir": {"type": "string"},
+        "sbomName": {"type": "string"},
+        "policy": {
+          "type": "object",
+          "properties": {
+            "enabled": {"type": "boolean"},
+            "allowList": {"type": "array", "items": {"type": "string"}},
+            "denyList": {"type": "array", "items": {"type": "string"}},
+            "enforcement": {"type": "string", "enum": ["block", "warn"]}
+          }
+        },
+        "provenance": {
+          "type": "object",
+          "properties": {
+            "enabled": {"type": "boolean"}
+          }
+        }
+      }
+    },
+    "plugins": {
+      "type": "object",
+      "properties": {
+        "enabled": {"type": "boolean"},
+        "enabledPlugins": {"type": "array", "items": {"type": "string"}},
+        "disabledPlugins": {"type": "array", "items": {"type": "string"}}
+      }
+    }
+  }
+}

@@ -1,0 +1,293 @@
+{
+  "version": "2.1.0",
+  "sync": {
+    "defaultStrategy": "full",
+    "enableParallelSync": true,
+    "maxParallelRepos": 4,
+    "snapshotBeforePush": true
+  },
+  "git": {
+    "remoteName": "origin",
+    "defaultBranchFallback": "main",
+    "pullConflictPolicy": "ask",
+    "minVersion": "2.20.0",
+    "retryCount": 3,
+    "stashWhenWorkingTreeDirty": true
+  },
+  "logging": {
+    "level": "Info",
+    "enableFile": true,
+    "enableConsoleColor": true,
+    "enableJsonLog": true,
+    "maxLogFiles": 10,
+    "maxLogSizeMB": 50
+  },
+  "lfs": {
+    "patterns": [
+      "*.zip",
+      "*.tar",
+      "*.tar.gz",
+      "*.rar",
+      "*.7z",
+      "*.mp4",
+      "*.avi",
+      "*.mov",
+      "*.wmv",
+      "*.flv",
+      "*.wav",
+      "*.mp3",
+      "*.flac",
+      "*.ogg",
+      "*.aac",
+      "*.pdf",
+      "*.psd",
+      "*.ai",
+      "*.sketch",
+      "*.db",
+      "*.sqlite",
+      "*.mdb",
+      "*.accdb",
+      "*.bak",
+      "*.backup",
+      "*.dat",
+      "*.bin",
+      "*.iso",
+      "*.dmg",
+      "*.img",
+      "*.vhd",
+      "*.vhdx",
+      "*.qcow2",
+      "*.vmdk"
+    ]
+  },
+  "gpg": {
+    "signCommits": false
+  },
+  "gitignore": {
+    "enabled": true,
+    "rulesToAdd": [
+      "# === SECURITY ===",
+      "ssh_id",
+      "*.pfx",
+      ".env",
+      "bin/",
+      "obj/",
+      "node_modules/",
+      ".vs/",
+      "*.apk",
+      "*.aab",
+      "publish-output/"
+    ]
+  },
+  "artifactUnstage": {
+    "enabled": true,
+    "patterns": [
+      "\\.(apk|aab|ipa|msix)$"
+    ],
+    "extraPatterns": [
+      "publish-output/"
+    ]
+  },
+  "webhook": {
+    "enabled": false,
+    "url": "",
+    "onSuccess": true,
+    "onFailure": true
+  },
+  "secretScan": {
+    "enabled": true,
+    "blockOnMatch": true,
+    "extraPatterns": []
+  },
+  "junkCleanup": {
+    "enabled": true,
+    "patterns": [
+      "*.tmp",
+      ".DS_Store",
+      "Thumbs.db",
+      "test-*.txt",
+      "test-out*.txt",
+      "*-output.txt",
+      "test-final.txt"
+    ],
+    "restrictToDirs": [
+      "."
+    ],
+    "confirmBeforeDelete": false
+  },
+  "largeFiles": {
+    "enabled": true,
+    "thresholdMB": 50,
+    "excludeDirs": []
+  },
+  "gsyncIgnore": {
+    "enabled": true,
+    "patterns": [
+      "*.exe",
+      "*.dll",
+      "bin/",
+      "obj/",
+      "node_modules/"
+    ],
+    "autoLoadFile": true
+  },
+  "sensitive": {
+    "allowedPatterns": []
+  },
+  "autoCommit": {
+    "enabled": true,
+    "smartStaging": true,
+    "autoCleanup": true,
+    "ai": {
+      "enabled": true,
+      "locale": "vi"
+    },
+    "commitMessageTemplate": "chore: auto-sync {0}",
+    "excludedExtensions": [
+      ".tmp",
+      ".log",
+      ".exe",
+      ".dll",
+      ".pdb"
+    ],
+    "excludedDirectories": [
+      "bin/",
+      "obj/",
+      "node_modules/",
+      "publish-output/",
+      ".vs/"
+    ]
+  },
+  "security": {
+    "enabled": true,
+    "blockOnMatch": true,
+    "secretPatterns": [
+      "(?i)(sk-or-v1-[a-z0-9]{32,})",
+      "(?i)(ghp_[a-z0-9]{36})",
+      "(?i)(gho_[a-z0-9]{36})",
+      "(?i)(ghu_[a-z0-9]{36})",
+      "(?i)(ghs_[a-z0-9]{36})",
+      "(?i)(ghr_[a-z0-9]{36})",
+      "(?i)(npm_[a-z0-9]{36})",
+      "(?i)(token\\s*[=:]\\s*[a-zA-Z0-9]{20,})",
+      "(?i)(password\\s*[=:]\\s*\\S+)"
+    ],
+    "redactPatterns": [
+      {
+        "name": "generic_token",
+        "pattern": "sk-or-v1-[a-z0-9]{32,}",
+        "replacement": "***REDACTED***"
+      },
+      {
+        "name": "github_token",
+        "pattern": "ghp_[a-z0-9]{36}",
+        "replacement": "***REDACTED***"
+      },
+      {
+        "name": "npm_token",
+        "pattern": "npm_[a-z0-9]{36}",
+        "replacement": "***REDACTED***"
+      },
+      {
+        "name": "password_kv",
+        "pattern": "password\\s*[=:]\\s*\\S+",
+        "replacement": "password=***REDACTED***"
+      },
+      {
+        "name": "token_kv",
+        "pattern": "token\\s*[=:]\\s*\\S+",
+        "replacement": "token=***REDACTED***"
+      }
+    ],
+    "encryptStateFiles": false
+  },
+  "supplyChain": {
+    "enabled": true,
+    "format": "cyclonedx",
+    "outputDir": "build-reports",
+    "sbomName": "gsync-sbom.json",
+    "policy": {
+      "enabled": true,
+      "allowList": [],
+      "denyList": [],
+      "enforcement": "block"
+    },
+    "provenance": {
+      "enabled": true
+    }
+  },
+  "plugins": {
+    "enabled": true,
+    "enabledPlugins": [],
+    "disabledPlugins": []
+  },
+  "tenancy": {
+    "tenantId": "${env:GSYNC_TENANT_ID}",
+    "defaultTenant": "default",
+    "isolation": "directory"
+  },
+  "hooks": {
+    "preCommit": [],
+    "postCommit": [],
+    "prePush": [],
+    "postPush": []
+  },
+  "contentGate": {
+    "enabled": true,
+    "runProjectGates": true,
+    "projectGates": ["workflow"],
+    "textExtensions": []
+  },
+  "alerting": {
+    "enabled": false,
+    "webhookUrl": "",
+    "minSeverity": "Error",
+    "headers": {}
+  },
+  "metrics": {
+    "enabled": false,
+    "prometheusPort": 9090,
+    "enableOtel": false
+  },
+  "telemetry": {
+    "enabled": true,
+    "anonymousOnly": true,
+    "collectSyncTimes": true,
+    "collectErrorStats": true,
+    "prometheus": {
+      "enabled": false,
+      "port": 9090,
+      "bindAddress": "127.0.0.1",
+      "altPorts": [9091, 9092],
+      "metricsPath": "/metrics/"
+    },
+    "otel": {
+      "enabled": false,
+      "endpoint": "${env:OTEL_EXPORTER_OTLP_ENDPOINT}",
+      "metricsPath": "/v1/metrics",
+      "tracesPath": "/v1/traces",
+      "jsonDepth": 10
+    }
+  },
+  "project": {
+    "gitignorePatterns": [
+      "_Build/",
+      "_Sync/",
+      "node_modules/",
+      "bin/",
+      "obj/",
+      "publish-output/",
+      "build-reports/",
+      "logs/",
+      "TestResults/",
+      "*.log",
+      "*.tmp",
+      "test-*.txt",
+      "test-out*.txt",
+      "*-output.txt",
+      "test-final.txt",
+      ".gbuildcache/",
+      ".gbuild-state.gbuildstate"
+    ]
+  }
+}
