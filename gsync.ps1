@@ -297,4 +297,4 @@ if ($RepoUrl)    { $params['RepoUrl']    = $RepoUrl }
 if ($RemoteName) { $params['RemoteName'] = $RemoteName }
 if ($Locale)     { $params['Locale']     = $Locale }
 
-Start-GSync @params
+Start-GSync @params | Out-Null
