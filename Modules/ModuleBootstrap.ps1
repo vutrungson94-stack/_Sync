@@ -22,6 +22,11 @@ param(
     [string[]]$Dependencies = @()
 )
 
+# Guard against recursive re-entry while a module is still loading.
+if ($global:GSyncBootstrapInProgress) { return }
+$global:GSyncBootstrapInProgress = $true
+try {
+
 # ── The logger is used by every module ────────────────────────────────────
 # The probe is Write-GSyncError, NOT Write-Log. Both tools export a
 # Write-Log, so checking for that name was satisfied by the OTHER tool's
@@ -87,4 +92,8 @@ foreach ($dep in $Dependencies) {
     # NOT LOADED AT ALL: a first import. -Force is safe here (there is no
     # instance to orphan) and it makes the import idempotent.
     Import-Module $depPath -Force -Global -DisableNameChecking -ErrorAction SilentlyContinue
+}
+
+} finally {
+    $global:GSyncBootstrapInProgress = $false
 }

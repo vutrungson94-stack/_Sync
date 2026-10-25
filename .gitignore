@@ -21,3 +21,28 @@ build-reports/
 .gbuild-state.gbuildstate
 .gbuild-state.gbuildstate.lock
 .gbuild/
+
+# --- added by gsync security gate ---
+.env
+*.pfx
+ssh_id
+*.p12
+*.key
+.DS_Store
+Thumbs.db
+*.swp
+*~
+.vscode/
+.idea/
+*.orig
+*.rej
+.cache/
+# === SECURITY ===
+.vs/
+*.apk
+*.aab
+*.env
+secrets.*
+*.secret
+*.pem
+sync-outputs/
