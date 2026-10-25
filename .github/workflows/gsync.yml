@@ -117,7 +117,6 @@ jobs:
   otel:
     name: OTLP telemetry export
     runs-on: ubuntu-latest
-    if: ${{ secrets.OTEL_EXPORTER_OTLP_ENDPOINT != '' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -131,6 +130,10 @@ jobs:
         env:
           OTEL_EXPORTER_OTLP_ENDPOINT: ${{ secrets.OTEL_EXPORTER_OTLP_ENDPOINT }}
         run: |
+          if (-not $env:OTEL_EXPORTER_OTLP_ENDPOINT) {
+            Write-Host 'OTLP endpoint not configured; skipping export.'
+            exit 0
+          }
           Import-Module ./Modules/Metrics.psm1 -Force -Global -DisableNameChecking
           New-SyncMetricCounter -Name 'gsync_ci_run_total' -Help 'CI run counter'
           Add-SyncMetric -Name 'gsync_ci_run_total' -Value 1
