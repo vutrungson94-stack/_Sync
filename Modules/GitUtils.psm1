@@ -1,4 +1,4 @@
-﻿#Requires -Version 5.1
+#Requires -Version 5.1
 # GitUtils.psm1
 
 # Make the logger available when this module is imported on its own.
@@ -133,33 +133,37 @@ function Get-GitConflictType {
 
 function Invoke-GitAbort {
     param([string]$ConflictType)
-    switch ($ConflictType) {
-        "rebase"      { & git rebase --abort }
-        "merge"       { & git merge --abort }
-        "cherry-pick" { & git cherry-pick --abort }
-    }
-    if ($LASTEXITCODE -ne 0) {
-        Write-Log (Get-LocaleMessage -Key 'gsync.msg.git.cannotAbort' -MessageArgs @($ConflictType)) -Level Error
-        return $false
-    }
-    Write-Log (Get-LocaleMessage -Key 'gsync.msg.git.aborted' -MessageArgs @($ConflictType)) -Level Success
-    return $true
+    try {
+        switch ($ConflictType) {
+            "rebase"      { & git rebase --abort }
+            "merge"       { & git merge --abort }
+            "cherry-pick" { & git cherry-pick --abort }
+        }
+        if ($LASTEXITCODE -ne 0) {
+            Write-Log (Get-LocaleMessage -Key 'gsync.msg.git.cannotAbort' -MessageArgs @($ConflictType)) -Level Error
+            return $false
+        }
+        Write-Log (Get-LocaleMessage -Key 'gsync.msg.git.aborted' -MessageArgs @($ConflictType)) -Level Success
+        return $true
+    } catch { return $false }
 }
 
 function Invoke-GitConflictHandler {
     param([string]$ConflictType)
-    $typeLabel = if ($ConflictType) { $ConflictType } else { "git operation" }
-    Write-Host (Get-LocaleMessage -Key 'gsync.msg.git.conflict' -MessageArgs @($typeLabel)) -ForegroundColor (Resolve-SafeColor -ColorName 'Warn' -Fallback 'Yellow')
-    Write-Host (Get-LocaleMessage -Key 'gsync.msg.git.resolutionGuide') -ForegroundColor (Resolve-SafeColor -ColorName 'Info' -Fallback 'Cyan')
-    Write-Host (Get-LocaleMessage -Key 'gsync.msg.git.conflictViewFiles')
-    Write-Host (Get-LocaleMessage -Key 'gsync.msg.git.conflictEditFiles')
-    if ($ConflictType) { Write-Host (Get-LocaleMessage -Key 'gsync.msg.git.conflictContinue' -MessageArgs @($typeLabel)) }
-    Write-Host (Get-LocaleMessage -Key 'gsync.msg.git.conflictAbort' -MessageArgs @($typeLabel))
-    if (Confirm-YesNo "Show conflict file list?" -Default "y") {
-        $files = & git diff --name-only --diff-filter=U 2>$null
-        if ($files) { $files | ForEach-Object { Write-Host "      $_" -ForegroundColor (Resolve-SafeColor -ColorName 'Warn' -Fallback 'Yellow') } }
-    }
-    return $false   # ← Don't throw; caller uses return value to exit
+    try {
+        $typeLabel = if ($ConflictType) { $ConflictType } else { "git operation" }
+        Write-Host (Get-LocaleMessage -Key 'gsync.msg.git.conflict' -MessageArgs @($typeLabel)) -ForegroundColor (Resolve-SafeColor -ColorName 'Warn' -Fallback 'Yellow')
+        Write-Host (Get-LocaleMessage -Key 'gsync.msg.git.resolutionGuide') -ForegroundColor (Resolve-SafeColor -ColorName 'Info' -Fallback 'Cyan')
+        Write-Host (Get-LocaleMessage -Key 'gsync.msg.git.conflictViewFiles')
+        Write-Host (Get-LocaleMessage -Key 'gsync.msg.git.conflictEditFiles')
+        if ($ConflictType) { Write-Host (Get-LocaleMessage -Key 'gsync.msg.git.conflictContinue' -MessageArgs @($typeLabel)) }
+        Write-Host (Get-LocaleMessage -Key 'gsync.msg.git.conflictAbort' -MessageArgs @($typeLabel))
+        if (Confirm-YesNo "Show conflict file list?" -Default "y") {
+            $files = & git diff --name-only --diff-filter=U 2>$null
+            if ($files) { $files | ForEach-Object { Write-Host "      $_" -ForegroundColor (Resolve-SafeColor -ColorName 'Warn' -Fallback 'Yellow') } }
+        }
+        return $false
+    } catch { return $false }
 }
 
 function Get-CurrentBranch {
@@ -169,7 +173,8 @@ function Get-CurrentBranch {
         $branch = & git rev-parse --abbrev-ref HEAD 2>$null
     }
     if (-not $branch -or $branch -eq 'HEAD') {
-        $fallback = $Config.git.defaultBranchFallback
+        $fallback = 'main'
+        try { if ($Config -and $Config.git -and $Config.git.defaultBranchFallback) { $fallback = $Config.git.defaultBranchFallback } } catch { }
         if (-not (Test-InteractiveSession)) { $branch = $fallback }
         else {
             $inp = Read-Host "Enter branch name (Enter = $fallback)"

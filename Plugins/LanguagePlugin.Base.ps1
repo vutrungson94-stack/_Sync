@@ -39,8 +39,8 @@ function Invoke-PluginBuild {
     # Execute the build command
     try {
         $psi = New-Object System.Diagnostics.ProcessStartInfo
-        $psi.FileName = 'cmd.exe'
-        $psi.Arguments = "/c $($script:BuildCommand)"
+        $psi.FileName = if ([System.Environment]::OSVersion.Platform -eq [System.PlatformID]::Win32NT) { 'cmd.exe' } else { '/bin/sh' }
+        $psi.Arguments = if ([System.Environment]::OSVersion.Platform -eq [System.PlatformID]::Win32NT) { "/c $($script:BuildCommand)" } else { "-c $($script:BuildCommand)" }
         $psi.WorkingDirectory = $ProjectPath
         $psi.RedirectStandardOutput = $true
         $psi.RedirectStandardError = $true
@@ -67,8 +67,8 @@ function Invoke-PluginTest {
     if ($null -eq $manifest) { return @{ ExitCode = 0; Output = "$($script:PluginName.ToLower()) plugin: test skipped (no manifest)"; Errors = @() } }
     try {
         $psi = New-Object System.Diagnostics.ProcessStartInfo
-        $psi.FileName = 'cmd.exe'
-        $psi.Arguments = "/c $($script:TestCommand)"
+        $psi.FileName = if ([System.Environment]::OSVersion.Platform -eq [System.PlatformID]::Win32NT) { 'cmd.exe' } else { '/bin/sh' }
+        $psi.Arguments = if ([System.Environment]::OSVersion.Platform -eq [System.PlatformID]::Win32NT) { "/c $($script:TestCommand)" } else { "-c $($script:TestCommand)" }
         $psi.WorkingDirectory = $ProjectPath
         $psi.RedirectStandardOutput = $true
         $psi.RedirectStandardError = $true
@@ -95,8 +95,8 @@ function Invoke-PluginLint {
     if ($null -eq $manifest) { return @{ ExitCode = 0; Output = "$($script:PluginName.ToLower()) plugin: lint skipped (no manifest)"; Errors = @() } }
     try {
         $psi = New-Object System.Diagnostics.ProcessStartInfo
-        $psi.FileName = 'cmd.exe'
-        $psi.Arguments = "/c $($script:LintCommand)"
+        $psi.FileName = if ([System.Environment]::OSVersion.Platform -eq [System.PlatformID]::Win32NT) { 'cmd.exe' } else { '/bin/sh' }
+        $psi.Arguments = if ([System.Environment]::OSVersion.Platform -eq [System.PlatformID]::Win32NT) { "/c $($script:LintCommand)" } else { "-c $($script:LintCommand)" }
         $psi.WorkingDirectory = $ProjectPath
         $psi.RedirectStandardOutput = $true
         $psi.RedirectStandardError = $true
