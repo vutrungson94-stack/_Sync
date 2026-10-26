@@ -90,7 +90,9 @@ jobs:
         run: |
           Import-Module ./Modules/SupplyChain.psm1 -Force -Global -DisableNameChecking
           $root = (Get-Item -LiteralPath $env:GITHUB_WORKSPACE).FullName
-          $sbomPath = New-SyncSbom -Root $root -ToolName 'gsync'
+          # New-SyncSbom returns the document; Write-SyncSbom writes it to the
+          # report directory and returns the FILE PATH the gate expects.
+          $sbomPath = Write-SyncSbom -Root $root -ToolName 'gsync'
           Write-Host "SBOM written to $sbomPath"
           $gate = Invoke-SyncSbomPolicyGate -SbomPath $sbomPath -Root $root
           if (-not $gate.Passed) {

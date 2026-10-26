@@ -1,8 +1,12 @@
 BeforeAll {
     $global:ScriptRoot = Join-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) '_Sync'
     Import-Module (Join-Path $global:ScriptRoot "Modules\gsync-Hooks.ps1") -Force -Global -DisableNameChecking -ErrorAction Stop
-    # Pester 5 keeps only BeforeAll-scoped functions visible to the It bodies;
-    # a script-level helper would be invisible at run time.
+    # Pester 5 keeps only BeforeAll-scoped values visible to the It bodies;
+    # a Describe-scope or script-level value would be invisible at run time
+    # under Invoke-Pester (-Path) as used by Run-Tests.ps1.
+    $cfg = [PSCustomObject]@{
+        contentGate = [PSCustomObject]@{ enabled = $true; runProjectGates = $false }
+    }
     function New-TestRepo {
         $repo = Join-Path $TestDrive ("repo-" + [guid]::NewGuid().ToString('N').Substring(0, 8))
         New-Item -ItemType Directory -Path $repo -Force | Out-Null
@@ -15,10 +19,6 @@ BeforeAll {
 }
 
 Describe "gsync content gate (pre-push)" {
-    $cfg = [PSCustomObject]@{
-        contentGate = [PSCustomObject]@{ enabled = $true; runProjectGates = $false }
-    }
-
     It "blocks a push whose staged text file carries a NUL byte" {
         New-TestRepo
         try {
