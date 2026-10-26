@@ -111,7 +111,15 @@ Write-Host (Get-LocaleMessage -Key 'gsync.msg.test.paths' -MessageArgs @($($test
 
 $testPaths = $testFiles.FullName
 
-$result = Invoke-Pester -Path $testPaths -EnableExit:$false -PassThru
+Import-Module Pester -MinimumVersion 5.0.0 -ErrorAction Stop
+
+$cfg = [PesterConfiguration]::Default
+$cfg.Run.Path        = $testPaths
+$cfg.Run.PassThru    = $true
+$cfg.Run.Exit        = $false
+$cfg.Output.Verbosity = 'Normal'
+
+$result = Invoke-Pester -Configuration $cfg
 
 $passCount = $result.PassedCount
 $failCount = $result.FailedCount
