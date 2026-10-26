@@ -19,16 +19,13 @@ permissions:
 jobs:
   test:
     name: Pester batch (fail-closed)
-    runs-on: ubuntu-latest
+    # Pinned image: ubuntu-latest migrates to Ubuntu 26 (starts 2026-10-19).
+    # ubuntu-24.04 is a GitHub-hosted image with pwsh preinstalled, no setup action needed.
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-
-      - name: Setup PowerShell
-        uses: PowerShell/PowerShell-Action@v1
-        with:
-          version: '7.x'
 
       - name: Install Pester
         shell: pwsh
@@ -57,7 +54,7 @@ jobs:
 
       - name: Upload test results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: gsync-testresults
           path: TestResults/**
@@ -67,7 +64,7 @@ jobs:
     name: Windows PowerShell 5.1 smoke
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -82,16 +79,11 @@ jobs:
 
   sbom:
     name: SBOM + provenance (CycloneDX)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-
-      - name: Setup PowerShell
-        uses: PowerShell/PowerShell-Action@v1
-        with:
-          version: '7.x'
 
       - name: Generate SBOM and check the policy gate
         shell: pwsh
@@ -108,7 +100,7 @@ jobs:
 
       - name: Upload SBOM
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: gsync-sbom
           path: build-reports/**
@@ -116,14 +108,9 @@ jobs:
 
   otel:
     name: OTLP telemetry export
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup PowerShell
-        uses: PowerShell/PowerShell-Action@v1
-        with:
-          version: '7.x'
+      - uses: actions/checkout@v7
 
       - name: Export metrics over OTLP
         shell: pwsh
