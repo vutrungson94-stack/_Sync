@@ -40,7 +40,7 @@ function Invoke-PluginBuild {
     try {
         $psi = New-Object System.Diagnostics.ProcessStartInfo
         $psi.FileName = if ([System.Environment]::OSVersion.Platform -eq [System.PlatformID]::Win32NT) { 'cmd.exe' } else { '/bin/sh' }
-        $psi.Arguments = if ([System.Environment]::OSVersion.Platform -eq [System.PlatformID]::Win32NT) { "/c $($script:BuildCommand)" } else { "-c $($script:BuildCommand)" }
+        $psi.Arguments = if ([System.Environment]::OSVersion.Platform -eq [System.PlatformID]::Win32NT) { "/c $($script:BuildCommand)" } else { "-c `"$($script:BuildCommand)`"" }
         $psi.WorkingDirectory = $ProjectPath
         $psi.RedirectStandardOutput = $true
         $psi.RedirectStandardError = $true
@@ -68,7 +68,7 @@ function Invoke-PluginTest {
     try {
         $psi = New-Object System.Diagnostics.ProcessStartInfo
         $psi.FileName = if ([System.Environment]::OSVersion.Platform -eq [System.PlatformID]::Win32NT) { 'cmd.exe' } else { '/bin/sh' }
-        $psi.Arguments = if ([System.Environment]::OSVersion.Platform -eq [System.PlatformID]::Win32NT) { "/c $($script:TestCommand)" } else { "-c $($script:TestCommand)" }
+        $psi.Arguments = if ([System.Environment]::OSVersion.Platform -eq [System.PlatformID]::Win32NT) { "/c $($script:TestCommand)" } else { "-c `"$($script:TestCommand)`"" }
         $psi.WorkingDirectory = $ProjectPath
         $psi.RedirectStandardOutput = $true
         $psi.RedirectStandardError = $true
@@ -96,7 +96,7 @@ function Invoke-PluginLint {
     try {
         $psi = New-Object System.Diagnostics.ProcessStartInfo
         $psi.FileName = if ([System.Environment]::OSVersion.Platform -eq [System.PlatformID]::Win32NT) { 'cmd.exe' } else { '/bin/sh' }
-        $psi.Arguments = if ([System.Environment]::OSVersion.Platform -eq [System.PlatformID]::Win32NT) { "/c $($script:LintCommand)" } else { "-c $($script:LintCommand)" }
+        $psi.Arguments = if ([System.Environment]::OSVersion.Platform -eq [System.PlatformID]::Win32NT) { "/c $($script:LintCommand)" } else { "-c `"$($script:LintCommand)`"" }
         $psi.WorkingDirectory = $ProjectPath
         $psi.RedirectStandardOutput = $true
         $psi.RedirectStandardError = $true

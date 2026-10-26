@@ -117,7 +117,7 @@ Describe 'Get-GitConflictType' {
 Describe 'Invoke-GitAbort' {
     It 'Should not throw' {
         # Arrange
-                    $ConflictType = '-C-o-n-f-l-i-c-t-T-y-p-e.ToLower()'
+                    $ConflictType = 'merge'
         # Act & Assert
         { Invoke-GitAbort -ConflictType $ConflictType } | Should -Not -Throw
     }
@@ -125,7 +125,7 @@ Describe 'Invoke-GitAbort' {
 Describe 'Invoke-GitConflictHandler' {
     It 'Should not throw' {
         # Arrange
-                    $ConflictType = '-C-o-n-f-l-i-c-t-T-y-p-e.ToLower()'
+                    $ConflictType = 'merge'
         # Act & Assert
         { Invoke-GitConflictHandler -ConflictType $ConflictType } | Should -Not -Throw
     }
@@ -133,7 +133,7 @@ Describe 'Invoke-GitConflictHandler' {
 Describe 'Get-CurrentBranch' {
     It 'Should not throw' {
         # Arrange
-                    $Config = '-C-o-n-f-i-g.ToLower()'
+                    $Config = @{ git = @{ defaultBranchFallback = 'main' } }
         # Act & Assert
         { Get-CurrentBranch -Config $Config } | Should -Not -Throw
     }
@@ -141,8 +141,8 @@ Describe 'Get-CurrentBranch' {
 Describe 'Get-UpstreamBranch' {
     It 'Should not throw' {
         # Arrange
-                    $RemoteName = '-R-e-m-o-t-e-N-a-m-e.ToLower()'
-            $LocalBranch = '-L-o-c-a-l-B-r-a-n-c-h.ToLower()'
+                    $RemoteName = 'origin'
+            $LocalBranch = 'main'
         # Act & Assert
         { Get-UpstreamBranch -RemoteName $RemoteName -LocalBranch $LocalBranch } | Should -Not -Throw
     }
@@ -150,8 +150,8 @@ Describe 'Get-UpstreamBranch' {
 Describe 'Test-RemoteBranch' {
     It 'Should not throw' {
         # Arrange
-                    $RemoteName = '-R-e-m-o-t-e-N-a-m-e.ToLower()'
-            $Branch = '-B-r-a-n-c-h.ToLower()'
+                    $RemoteName = 'origin'
+            $Branch = 'main'
         # Act & Assert
         { Test-RemoteBranch -RemoteName $RemoteName -Branch $Branch } | Should -Not -Throw
     }
@@ -159,7 +159,7 @@ Describe 'Test-RemoteBranch' {
 Describe 'Invoke-GitFetch' {
     It 'Should not throw' {
         # Arrange
-                    $RemoteName = '-R-e-m-o-t-e-N-a-m-e.ToLower()'
+                    $RemoteName = 'origin'
             $Retry = 2
         # Act & Assert
         { Invoke-GitFetch -RemoteName $RemoteName -Retry $Retry } | Should -Not -Throw
@@ -168,8 +168,8 @@ Describe 'Invoke-GitFetch' {
 Describe 'Get-AheadBehind' {
     It 'Should not throw' {
         # Arrange
-                    $LocalBranch = '-L-o-c-a-l-B-r-a-n-c-h.ToLower()'
-            $RemoteBranch = '-R-e-m-o-t-e-B-r-a-n-c-h.ToLower()'
+                    $LocalBranch = 'main'
+            $RemoteBranch = 'origin/main'
         # Act & Assert
         { Get-AheadBehind -LocalBranch $LocalBranch -RemoteBranch $RemoteBranch } | Should -Not -Throw
     }
@@ -177,8 +177,8 @@ Describe 'Get-AheadBehind' {
 Describe 'Invoke-GitPull' {
     It 'Should not throw' {
         # Arrange
-                    $RemoteName = '-R-e-m-o-t-e-N-a-m-e.ToLower()'
-            $Branch = '-B-r-a-n-c-h.ToLower()'
+                    $RemoteName = 'origin'
+            $Branch = 'main'
             $Retry = 2
         # Act & Assert
         { Invoke-GitPull -RemoteName $RemoteName -Branch $Branch -Retry $Retry } | Should -Not -Throw
@@ -187,9 +187,9 @@ Describe 'Invoke-GitPull' {
 Describe 'Invoke-GitPush' {
     It 'Should not throw' {
         # Arrange
-                    $RemoteName = '-R-e-m-o-t-e-N-a-m-e.ToLower()'
-            $Branch = '-B-r-a-n-c-h.ToLower()'
-            $Upstream = '-U-p-s-t-r-e-a-m.ToLower()'
+                    $RemoteName = 'origin'
+            $Branch = 'main'
+            $Upstream = 'origin/main'
             $RemoteExists = $true
             $Retry = 2
         # Act & Assert
@@ -241,9 +241,9 @@ Describe 'New-CommitMessageSuggestion' {
 Describe 'Send-WebhookNotification' {
     It 'Should not throw' {
         # Arrange
-                    $Config = '-C-o-n-f-i-g.ToLower()'
-            $Status = '-S-t-a-t-u-s.ToLower()'
-            $Message = '-M-e-s-s-a-g-e.ToLower()'
+                    $Config = @{ webhook = @{ enabled = $false } }
+            $Status = 'success'
+            $Message = 'test message'
         # Act & Assert
         { Send-WebhookNotification -Config $Config -Status $Status -Message $Message } | Should -Not -Throw
     }
