@@ -1,5 +1,5 @@
 BeforeAll {
-    $global:ScriptRoot = Join-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) '_Sync'
+    $global:ScriptRoot = Split-Path -Parent $PSScriptRoot
     # Dot-sourcing inside BeforeAll puts the functions in the BeforeAll
     # scope, where the It bodies cannot see them. Import-Module -Global
     # publishes them for the whole container.

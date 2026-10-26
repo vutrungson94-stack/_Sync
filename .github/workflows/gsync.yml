@@ -55,6 +55,7 @@ jobs:
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v7
+        continue-on-error: true
         with:
           name: gsync-testresults
           path: TestResults/**
@@ -103,6 +104,7 @@ jobs:
       - name: Upload SBOM
         if: always()
         uses: actions/upload-artifact@v7
+        continue-on-error: true
         with:
           name: gsync-sbom
           path: build-reports/**

@@ -1,5 +1,5 @@
 ﻿BeforeAll {
-    $global:ScriptRoot = Join-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) '_Sync'
+    $global:ScriptRoot = Split-Path -Parent $PSScriptRoot
     . (Join-Path $global:ScriptRoot "Modules\gsync-BranchProtection.ps1")
 }
 Describe "gsync-BranchProtection module" {

@@ -1,6 +1,6 @@
 BeforeAll { $script:HygToolRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..')) }
 # Hygiene.Tests.ps1 for _Sync
-$script:HygToolRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
+$script:HygToolRoot = Split-Path -Parent $PSScriptRoot
 Describe 'Hygiene: locale key sets identical' {
     It 'keeps key sets identical across all locales' {
         $locales = @('en','vi','zh','ja','fr','es','de')

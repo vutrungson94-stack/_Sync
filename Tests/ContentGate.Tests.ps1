@@ -1,5 +1,5 @@
 BeforeAll {
-    $global:ScriptRoot = Join-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) '_Sync'
+    $global:ScriptRoot = Split-Path -Parent $PSScriptRoot
     Import-Module (Join-Path $global:ScriptRoot "Modules\gsync-Hooks.ps1") -Force -Global -DisableNameChecking -ErrorAction Stop
     # Pester 5 keeps only BeforeAll-scoped values visible to the It bodies;
     # a Describe-scope or script-level value would be invisible at run time
