@@ -118,6 +118,47 @@ jobs:
           compression-level: 9
           if-no-files-found: ignore
 
+  coverage:
+    name: Code coverage
+    runs-on: ubuntu-24.04
+    needs: test
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Install Pester
+        shell: pwsh
+        run: |
+          Set-PSRepository PSGallery -InstallationPolicy Trusted
+          Install-Module Pester -MinimumVersion 5.0.0 -Scope CurrentUser -Force -SkipPublisherCheck
+
+      - name: Run the suite with code coverage
+        shell: pwsh
+        run: |
+          $root = (Get-Item -LiteralPath $env:GITHUB_WORKSPACE).FullName
+          Import-Module Pester -Force
+          $config = [PesterConfiguration]::Default
+          $config.Run.Path = (Join-Path $root 'Tests')
+          $config.Run.Exit = $true
+          $config.CodeCoverage.Enabled = $true
+          $config.CodeCoverage.OutputPath = (Join-Path $root 'coverage.xml')
+          $config.CodeCoverage.CoveragePercentTarget = 35
+          $config.CodeCoverage.Path = @((Join-Path $root 'Modules'), (Join-Path $root 'Core'))
+          $config.CodeCoverage.RecursePaths = $true
+          Invoke-Pester -Configuration $config
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v7
+        continue-on-error: true
+        with:
+          name: gsync-coverage
+          path: coverage.xml
+          retention-days: 3
+          compression-level: 9
+          if-no-files-found: ignore
+
   otel:
     name: OTLP telemetry export
     runs-on: ubuntu-24.04

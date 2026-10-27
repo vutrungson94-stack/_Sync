@@ -151,7 +151,7 @@ if ($gateEnabled) {
                             Code = 'project-gate-failed'
                             Message = "Project gate 'npm run $gateName' exited $LASTEXITCODE - it validates what this push ships."
                         })
-                        Write-Host "  --- output of 'npm run $gateName' (last lines) ---" -ForegroundColor Yellow
+                        Write-Host (Get-LocaleMessage -Key 'gsync.msg.hook.contentGateOutputHeader' -MessageArgs @($gateName)) -ForegroundColor Yellow
                         $gateOutput | Select-Object -Last 10 | ForEach-Object { Write-Host "  $_" }
                     }
                 } finally { Pop-Location }
@@ -160,18 +160,18 @@ if ($gateEnabled) {
     }
 
     if ($fatalIssues.Count -gt 0) {
-        Write-Warning "gsync content gate: push BLOCKED - $($fatalIssues.Count) problem(s) would ship broken content:"
+        Write-Warning (Get-LocaleMessage -Key 'gsync.msg.hook.contentGateBlocked' -MessageArgs @($fatalIssues.Count))
         foreach ($issue in $fatalIssues) {
-            Write-Warning ("  {0}  [{1}]{2} {3}" -f ((Split-Path $issue.File -Leaf)), $issue.Code, ($(if ($issue.Line) { " line $($issue.Line):" } else { ':' })), $issue.Message)
+            Write-Warning (Get-LocaleMessage -Key 'gsync.msg.hook.contentGateIssue' -MessageArgs @((Split-Path $issue.File -Leaf), $issue.Code, ($(if ($issue.Line) { " line $($issue.Line):" } else { ':' })), $issue.Message))
         }
-        Write-Warning "  (turn off with contentGate.enabled=false in gsync.config.json, or fix the files above)"
+        Write-Warning (Get-LocaleMessage -Key 'gsync.msg.hook.contentGateTurnOff')
         if (Get-Command Send-WebhookNotification -ErrorAction SilentlyContinue) {
             Send-WebhookNotification -Config $Config -Status "blocked" -Message "Content gate blocked push"
         }
         return $false
     }
     $warnIssues | ForEach-Object {
-        Write-Warning "gsync content gate (non-fatal): $((Split-Path $_.File -Leaf)) [$($_.Code)] $($_.Message)"
+        Write-Warning (Get-LocaleMessage -Key 'gsync.msg.hook.contentGateNonFatal' -MessageArgs @((Split-Path $_.File -Leaf), $_.Code, $_.Message))
     }
 }
 
