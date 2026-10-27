@@ -301,7 +301,7 @@ Describe "SyncEventManager" {
             }
             
             $manager.Subscribe("TestEvent", $handler)
-            $manager.Publish("TestEvent", "TestSource", @{}) 3>$null
+            $manager.Publish("TestEvent", "TestSource", @{})
             
             $manager.Errors.Count | Should -Be 1
             $manager.Errors[0].Exception | Should -Match ([regex]::Escape("Test handler error"))

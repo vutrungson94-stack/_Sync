@@ -30,7 +30,7 @@ Describe "gsync content gate (pre-push)" {
                 "plain text with a relic char: $([char]0x00)"
             )
             & git add note.txt 2>&1 | Out-Null
-            $verdict = Invoke-GSyncHook -HookType 'pre-push' -Config $cfg 3>$null
+            $verdict = Invoke-GSyncHook -HookType 'pre-push' -Config $cfg
             $verdict | Should -BeFalse -Because 'a NUL byte in a text file is corruption'
         } finally {
             Pop-Location
@@ -45,7 +45,7 @@ Describe "gsync content gate (pre-push)" {
             # two lines that closed a real workflow for every Node version.
             Set-Content -LiteralPath $workflow -Value "jobs:`n  build:`n    strategy:`n      fail-fast: false`n    name: build`n    name: build`n" -Encoding utf8
             & git add broken.yml 2>&1 | Out-Null
-            $verdict = Invoke-GSyncHook -HookType 'pre-push' -Config $cfg 3>$null
+            $verdict = Invoke-GSyncHook -HookType 'pre-push' -Config $cfg
             $verdict | Should -BeFalse -Because 'GitHub refuses to start a workflow with duplicate keys'
         } finally {
             Pop-Location
@@ -57,7 +57,7 @@ Describe "gsync content gate (pre-push)" {
         try {
             Set-Content -LiteralPath (Join-Path (Get-Location) 'ok.yml') -Value "name: t`njobs:`n  one:`n    name: one`n" -Encoding utf8
             & git add ok.yml 2>&1 | Out-Null
-            $verdict = Invoke-GSyncHook -HookType 'pre-push' -Config $cfg 3>$null
+            $verdict = Invoke-GSyncHook -HookType 'pre-push' -Config $cfg
             $verdict | Should -BeTrue -Because 'parseable files with no NUL bytes must pass'
         } finally {
             Pop-Location
@@ -72,7 +72,7 @@ Describe "gsync content gate (pre-push)" {
             $repoCfg = [PSCustomObject]@{
                 contentGate = [PSCustomObject]@{ enabled = $true; runProjectGates = $true; projectGates = @('workflow') }
             }
-            $verdict = Invoke-GSyncHook -HookType 'pre-push' -Config $repoCfg 3>$null
+            $verdict = Invoke-GSyncHook -HookType 'pre-push' -Config $repoCfg
             $verdict | Should -BeTrue -Because 'a repo without package.json has no npm gate to run'
         } finally {
             Pop-Location
@@ -85,7 +85,7 @@ Describe "gsync content gate (pre-push)" {
             Set-Content -LiteralPath (Join-Path (Get-Location) 'broken.yml') -Value "a: 1`na: 2`n" -Encoding utf8
             & git add broken.yml 2>&1 | Out-Null
             $offCfg = [PSCustomObject]@{ contentGate = [PSCustomObject]@{ enabled = $false } }
-            $verdict = Invoke-GSyncHook -HookType 'pre-push' -Config $offCfg 3>$null
+            $verdict = Invoke-GSyncHook -HookType 'pre-push' -Config $offCfg
             $verdict | Should -BeTrue -Because 'contentGate.enabled=false must be an escape hatch, not a promise'
         } finally {
             Pop-Location

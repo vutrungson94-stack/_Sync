@@ -48,6 +48,6 @@ Describe "Add-SyncEventListener wiring" {
     }
 
     It "Add-SyncEventListener handles invalid manager gracefully" {
-        { Add-SyncEventListener -Manager ([pscustomobject]@{}) -EventName 'x' -Handler { } 3>$null } | Should -Not -Throw
+        { Add-SyncEventListener -Manager ([pscustomobject]@{}) -EventName 'x' -Handler { } } | Should -Not -Throw
     }
 }
