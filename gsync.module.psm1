@@ -111,6 +111,48 @@ Set-StrictMode -Version 1.0
     }
 }
 
+function Save-GSyncStash {
+    <#
+    .SYNOPSIS
+        Stashes a dirty working tree when the configured policy allows it.
+    .DESCRIPTION
+        The stash policy used to be repeated at each call site, so the safety
+        path and the pull path could drift. The policy is owned here;
+        Invoke-StashIfDirty owns the git operation and records the stash name
+        that Restore-GSyncStash consumes.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)][object]$Config
+    )
+    if (-not $Config.git.stashWhenWorkingTreeDirty) { return }
+    $null = Invoke-StashIfDirty
+}
+
+function Restore-GSyncStash {
+    <#
+    .SYNOPSIS
+        Restores the stash and stops the sync when git cannot apply it.
+    .DESCRIPTION
+        Invoke-PopStash returns $false when `git stash pop` leaves conflicts.
+        The callers used to ignore that result and continued into `git add -A`,
+        which committed the conflict markers. A failed restore is a hard stop:
+        the stash entry and the conflicted working tree are preserved so the
+        operator can resolve them, then run gsync again.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)][object]$Config
+    )
+    if (-not $Config.git.stashWhenWorkingTreeDirty) { return }
+    if (Invoke-PopStash) { return }
+
+    $message = Get-LocaleMessage -Key 'gsync.msg.git.stashPopAborted'
+    Write-GSyncError $message
+    Send-WebhookNotification -Config $Config -Status 'failure' -Message $message
+    exit 1
+}
+
 function Invoke-EnabledSyncPlugins {
     <#
     .SYNOPSIS
@@ -449,7 +491,7 @@ function Start-GSync {
             if ($decision) {
                 Write-Log ((Get-LocaleMessage -Key 'gsync.msg.quality.decision' -MessageArgs @([string]$decision.Recommendation, [string]$decision.Reason))) -Level Info
                 if ($decision.Recommendation -eq 'prefer-remote') {
-                    if ($cfg.git.stashWhenWorkingTreeDirty) { $stashed = Invoke-StashIfDirty; if ($stashed) { $script:GSyncPendingStash = $true } }
+                    Save-GSyncStash -Config $cfg
                     if (Get-Command New-SyncSnapshot -ErrorAction SilentlyContinue) { try { $snapDir = Join-Path $moduleRoot '.sync_snapshots'; $null = New-SyncSnapshot -Label "pre-remote-prefer-$localBranch" -SnapshotsDir $snapDir } catch { } }
                     if ($DryRun) {
                         # git reset --hard discards the working tree. A dry run
@@ -459,7 +501,7 @@ function Start-GSync {
                         $null = & git reset --hard "$remoteName/$upstream" 2>&1
                         if ($LASTEXITCODE -ne 0) { Write-GSyncError "Remote-prefer reset failed."; exit 1 }
                     }
-                    if ($stashed) { Invoke-PopStash }
+                    Restore-GSyncStash -Config $cfg
                     Write-SubLog (Get-LocaleMessage -Key 'gsync.msg.step.safety') "Local fast-forwarded to higher-quality remote side" (Resolve-SafeColor -ColorName 'Warn' -Fallback 'Yellow')
                 } elseif ($decision.Recommendation -eq 'prefer-local') {
                     Write-Log (Get-LocaleMessage -Key 'gsync.msg.safety.forcePush') -Level Info
@@ -467,7 +509,7 @@ function Start-GSync {
                 } elseif ($decision.Relationship -eq 'Diverged') {
                     Write-GSyncError "Diverged commits with unclear quality winner. Aborting to protect repository."
                     Send-WebhookNotification -Config $cfg -Status "failure" -Message "Quality tie on diverged sync - manual review"
-                    if ($stashed) { Invoke-PopStash }
+                    Restore-GSyncStash -Config $cfg
                     exit 1
                 }
             }
@@ -475,7 +517,6 @@ function Start-GSync {
     } catch { Write-Log (Get-LocaleMessage -Key 'gsync.msg.safety.skipped' -MessageArgs @($_)) -Level Debug }
 
     # Step 4: Pull if needed (with retry)
-    $stashed = $false
     if ($commitsBehind -gt 0) {
         Write-Log (Get-LocaleMessage -Key 'gsync.msg.git.remoteAhead' -MessageArgs @($commitsBehind)) -Level Warn
         $policy = [string]$cfg.git.pullConflictPolicy
@@ -486,9 +527,7 @@ function Start-GSync {
             default { Confirm-YesNo "Pull new code?" -Default "y" }
         }
         if ($shouldPull) {
-            if ($cfg.git.stashWhenWorkingTreeDirty) {
-                $stashed = Invoke-StashIfDirty
-            }
+            Save-GSyncStash -Config $cfg
             Write-Progress -Activity "Pulling from remote..." -Status "Fetching changes"
             if ($DryRun) {
                 # Pull rewrites the working tree. A dry run only reports.
@@ -500,12 +539,12 @@ function Start-GSync {
             }
             Write-Progress -Activity "Pulling from remote..." -Completed
             if (-not $pullSuccess) {
-                if ($stashed) { Invoke-PopStash }
+                Restore-GSyncStash -Config $cfg
                 Invoke-GitConflictHandler
                 Invoke-GSyncFailureRecovery -Reason 'git pull failed'
                 exit 1
             }
-            if ($stashed) { Invoke-PopStash }
+            Restore-GSyncStash -Config $cfg
             Write-SubLog (Get-LocaleMessage -Key 'gsync.msg.step.pull') "Success" (Resolve-SafeColor -ColorName 'Succ' -Fallback 'Green')
         } else {
             Write-SubLog (Get-LocaleMessage -Key 'gsync.msg.step.pull') "Skipped" (Resolve-SafeColor -ColorName 'Gray' -Fallback 'DarkGray')
@@ -530,7 +569,7 @@ function Start-GSync {
             if (-not $pushSuccess) {
                 Write-GSyncError "Push failed."
                 Send-WebhookNotification -Config $cfg -Status "failure" -Message "Push failed"
-                if ($stashed) { Invoke-PopStash }
+                Restore-GSyncStash -Config $cfg
                 Invoke-GSyncFailureRecovery -Reason 'push of pending commits failed' -SnapshotId $script:GSyncSnapshotId -SnapshotsDir $script:GSyncSnapshotDir
                 exit 1
             }

@@ -248,3 +248,32 @@ Describe 'Send-WebhookNotification' {
         { Send-WebhookNotification -Config $Config -Status $Status -Message $Message } | Should -Not -Throw
     }
 }
+
+Describe 'Invoke-PopStash conflict handling' {
+    It 'returns false when git stash pop conflicts, instead of succeeding' {
+        $work = Join-Path $TestDrive 'stash-conflict'
+        New-Item -ItemType Directory -Path $work -Force | Out-Null
+        & git -C $work init -q 2>&1 | Out-Null
+        & git -C $work config user.email 'test@example.invalid'
+        & git -C $work config user.name 'Test'
+        Set-Content -LiteralPath (Join-Path $work 'file.txt') -Value 'base'
+        & git -C $work add . 2>&1 | Out-Null
+        & git -C $work commit -q -m 'base' 2>&1 | Out-Null
+
+        Push-Location $work
+        try {
+            Set-Content -LiteralPath (Join-Path $work 'file.txt') -Value 'local change'
+            Invoke-StashIfDirty | Should -BeTrue
+
+            Set-Content -LiteralPath (Join-Path $work 'file.txt') -Value 'remote change'
+            & git -C $work add . 2>&1 | Out-Null
+            & git -C $work commit -q -m 'remote' 2>&1 | Out-Null
+
+            $result = Invoke-PopStash
+            $result | Should -BeFalse -Because 'a conflicted pop must be reported as a failure'
+            (Get-Content -LiteralPath (Join-Path $work 'file.txt') -Raw) | Should -Match '<<<<<<<'
+        } finally {
+            Pop-Location
+        }
+    }
+}

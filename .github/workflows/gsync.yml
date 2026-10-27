@@ -16,6 +16,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     name: Pester batch (fail-closed)
@@ -53,13 +57,15 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit 1 }
 
       - name: Upload test results
-        if: always()
+        if: failure()
         uses: actions/upload-artifact@v7
         continue-on-error: true
         with:
           name: gsync-testresults
           path: TestResults/**
-          retention-days: 14
+          retention-days: 3
+          compression-level: 9
+          if-no-files-found: ignore
 
   ps51-smoke:
     name: Windows PowerShell 5.1 smoke
@@ -102,13 +108,15 @@ jobs:
           }
 
       - name: Upload SBOM
-        if: always()
+        if: ${{ github.event_name != 'pull_request' }}
         uses: actions/upload-artifact@v7
         continue-on-error: true
         with:
           name: gsync-sbom
           path: build-reports/**
-          retention-days: 14
+          retention-days: 7
+          compression-level: 9
+          if-no-files-found: ignore
 
   otel:
     name: OTLP telemetry export

@@ -74,6 +74,7 @@
   "gsync.msg.git.pushAttempt": "Push de {0} vers {1} (tentative {2}/{3})...",
   "gsync.msg.git.pushFailedRebase": "Échec du push, tentative de pull --rebase...",
   "gsync.msg.git.stashPopConflict": "Conflit lors du pop du stash - traitez-le manuellement : git stash pop {0}",
+  "gsync.msg.git.stashPopAborted": "La restauration du stash a échoué ; la synchronisation est arrêtée pour protéger l'arbre de travail. Résolvez les conflits, puis relancez gsync (l'entrée de stash est conservée).",
   "gsync.msg.git.webhookSent": "Notification webhook envoyée ({0})",
   "gsync.msg.safety.forcePush": "Le côté local est de meilleure qualité ; push forcé avec lease.",
   "gsync.msg.safety.skipped": "Étape de sécurité ignorée : {0}",

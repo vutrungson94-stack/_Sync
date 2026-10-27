@@ -74,6 +74,7 @@
   "gsync.msg.git.pushAttempt": "{0} を {1} へプッシュ (試行 {2}/{3})...",
   "gsync.msg.git.pushFailedRebase": "プッシュに失敗しました。pull --rebase を試します...",
   "gsync.msg.git.stashPopConflict": "stash pop の競合 - 手動で処理してください: git stash pop {0}",
+  "gsync.msg.git.stashPopAborted": "stash の復元に失敗しました。作業ツリーを保護するため同期を停止しました。競合を解決してから gsync を再実行してください（stash エントリは保持されています）。",
   "gsync.msg.git.webhookSent": "Webhook 通知を送信しました（{0}）",
   "gsync.msg.safety.forcePush": "ローカル側が優先されるため、force-with-lease プッシュを行います。",
   "gsync.msg.safety.skipped": "安全ステップをスキップしました: {0}",

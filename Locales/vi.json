@@ -74,6 +74,7 @@
   "gsync.msg.git.pushAttempt": "Đang đẩy {0} lên {1} (lần {2}/{3})...",
   "gsync.msg.git.pushFailedRebase": "Đẩy thất bại, đang thử pull --rebase...",
   "gsync.msg.git.stashPopConflict": "Xung đột khi pop stash - xử lý thủ công: git stash pop {0}",
+  "gsync.msg.git.stashPopAborted": "Khôi phục stash thất bại; đã dừng sync để bảo vệ working tree. Hãy xử lý xung đột rồi chạy lại gsync (stash vẫn được giữ lại).",
   "gsync.msg.git.webhookSent": "Đã gửi thông báo webhook ({0})",
   "gsync.msg.safety.forcePush": "Phía cục bộ tốt hơn; sẽ đẩy cưỡng bức kèm thuê.",
   "gsync.msg.safety.skipped": "Đã bỏ qua bước an toàn: {0}",

@@ -263,7 +263,7 @@ function Invoke-StashIfDirty {
     if ($dirty.Count -eq 0) { return $false }
     $stamp = Get-Date -Format "yyyyMMdd-HHmmss"
     $stashName = "gsync-auto-$stamp"
-    & git stash push -u -m $stashName
+    & git stash push -u -m $stashName 2>&1 | Out-Null
     if ($LASTEXITCODE -eq 0) {
         Write-SubLog (Get-LocaleMessage -Key 'gsync.msg.step.stash') "Saved ($stashName)" (Resolve-SafeColor -ColorName 'Info' -Fallback 'Cyan')
         $script:StashName = $stashName
@@ -279,13 +279,14 @@ function Invoke-PopStash {
     if (-not $stashLine) {
         Write-Warn (Get-LocaleMessage -Key 'gsync.msg.git.stashNotFound' -MessageArgs @([string]$script:StashName))
         $script:StashName = $null
-        return $true
+        return $false   # ← The saved work is not back in the tree; the caller must stop.
     }
     $stashRef = ($stashLine -split ' ')[0]
-    & git stash pop $stashRef
+    & git stash pop $stashRef 2>&1 | Out-Null
     if ($LASTEXITCODE -ne 0) {
         Write-Log (Get-LocaleMessage -Key 'gsync.msg.git.stashPopConflict' -MessageArgs @($stashRef)) -Level Warn
-        $script:StashName = $null
+        # Keep $script:StashName: a conflicted pop leaves the stash entry in
+        # place. The caller stops and the operator can inspect or retry it.
         return $false   # ← Don't throw; caller checks return value
     }
     Write-SubLog (Get-LocaleMessage -Key 'gsync.msg.step.stash') "Restored" (Resolve-SafeColor -ColorName 'Succ' -Fallback 'Green')
