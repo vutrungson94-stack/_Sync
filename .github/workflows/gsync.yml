@@ -57,7 +57,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit 1 }
 
       - name: Upload test results
-        if: failure()
+        if: false # disabled to stay within free artifact storage quota
         uses: actions/upload-artifact@v7
         continue-on-error: true
         with:
@@ -108,7 +108,7 @@ jobs:
           }
 
       - name: Upload SBOM
-        if: ${{ github.event_name != 'pull_request' }}
+        if: false # disabled to stay within free artifact storage quota
         uses: actions/upload-artifact@v7
         continue-on-error: true
         with:
@@ -149,7 +149,7 @@ jobs:
           Invoke-Pester -Configuration $config
 
       - name: Upload coverage report
-        if: always()
+        if: false # disabled to stay within free artifact storage quota
         uses: actions/upload-artifact@v7
         continue-on-error: true
         with:
