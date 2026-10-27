@@ -46,6 +46,27 @@ Works on Windows, Linux, and macOS with PowerShell 5.1+ / pwsh 7+.
 | `-RemoteName`     | Git remote name (default: `origin`)                 |
 | `-LogLevel`       | Logging: `Error`, `Warn`, `Info`, `Debug`           |
 
+## Running From a Parent Folder
+Do not run `gsync` from a folder that only contains `_Build`, `_Sync`, and `_Tests`.
+Point it at the project directory instead:
+
+```powershell
+.\_Sync\gsync.ps1 -Project "C:\path\to\project" -Yes
+```
+
+## Team Workflow
+1. Pull first: `gsync`
+2. Make small changes and run tests.
+3. Preview: `gsync -DryRun`
+4. Sync: `gsync`
+5. If a conflict stops the run, resolve it manually, then run `gsync` again.
+6. Push incomplete work to a feature branch, not `main`.
+
+## Troubleshooting
+- `Workspace root` error: you are running from a folder that only holds the platform tools.
+- Stash conflict: the stash entry is preserved; resolve conflicts, then run `gsync` again.
+- Missing config sections: copy `version`, `logging`, `security`, and `git.minVersion` from a valid config.
+
 ## Configuration
 
 Default config is auto-created at `.gitignore.config.json` in the project root. Key sections:
