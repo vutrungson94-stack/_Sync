@@ -287,7 +287,8 @@
       "*-output.txt",
       "test-final.txt",
       ".gbuildcache/",
-      ".gbuild-state.gbuildstate"
+      ".gbuild-state.gbuildstate",
+      "coverage.xml"
     ]
   }
 }

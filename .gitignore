@@ -46,3 +46,4 @@ secrets.*
 *.secret
 *.pem
 sync-outputs/
+coverage.xml
