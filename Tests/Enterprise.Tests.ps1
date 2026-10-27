@@ -120,7 +120,7 @@ Describe "GSync Config" {
 
     It "Test-GSyncConfig rejects missing version" {
         $cfg = Get-DefaultConfig
-        $cfg | Add-Member -NotePropertyName 'version' -NotePropertyValue $null
+        $cfg | Add-Member -NotePropertyName 'version' -NotePropertyValue $null -Force
         $cfg | Add-Member -NotePropertyName 'logging' -NotePropertyValue @{ level='Info' } -Force
         $cfg | Add-Member -NotePropertyName 'security' -NotePropertyValue @{ enabled=$true; blockOnMatch=$true } -Force
         $cfg | Add-Member -NotePropertyName 'git' -NotePropertyValue @{ remoteName='origin'; retryCount=3 } -Force
