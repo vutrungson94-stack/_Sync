@@ -107,6 +107,7 @@
   "gsync.msg.cli.moduleNotFound": "Không tìm thấy module: {0}",
   "gsync.msg.cli.moduleHint": "Đảm bảo gsync.module.psm1 nằm cùng thư mục với gsync.ps1.",
   "gsync.msg.cli.projectNotFound": "Không tìm thấy đường dẫn dự án: {0}",
+  "gsync.msg.cli.workspaceRoot": "Thư mục này chỉ chứa các công cụ nền tảng (_Build, _Sync, _Tests). Hãy chỉ gsync vào thư mục project.",
   "gsync.msg.cli.targetProject": "Dự án đích: {0}",
   "gsync.msg.cli.cannotLoadModule": "Không thể tải module: {0}",
   "gsync.msg.selftest.parseError": "LỖI PHÁP CÁP: {0}",

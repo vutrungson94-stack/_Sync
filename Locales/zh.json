@@ -107,6 +107,7 @@
   "gsync.msg.cli.moduleNotFound": "未找到模块：{0}",
   "gsync.msg.cli.moduleHint": "请确保 gsync.module.psm1 与 gsync.ps1 位于同一目录。",
   "gsync.msg.cli.projectNotFound": "未找到项目路径：{0}",
+  "gsync.msg.cli.workspaceRoot": "此文件夹仅包含平台工具（_Build、_Sync、_Tests）。请将 gsync 指向项目目录。",
   "gsync.msg.cli.targetProject": "目标项目：{0}",
   "gsync.msg.cli.cannotLoadModule": "无法加载模块：{0}",
   "gsync.msg.selftest.parseError": "语法错误：{0}",

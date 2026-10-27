@@ -107,6 +107,7 @@
   "gsync.msg.cli.moduleNotFound": "モジュールが見つかりません: {0}",
   "gsync.msg.cli.moduleHint": "gsync.module.psm1 が gsync.ps1 と同じディレクトリにあることを確認してください。",
   "gsync.msg.cli.projectNotFound": "プロジェクトパスが見つかりません: {0}",
+  "gsync.msg.cli.workspaceRoot": "このフォルダにはプラットフォームツール（_Build、_Sync、_Tests）のみが含まれます。gsync をプロジェクトディレクトリに向けてください。",
   "gsync.msg.cli.targetProject": "対象プロジェクト: {0}",
   "gsync.msg.cli.cannotLoadModule": "モジュールを読み込めません: {0}",
   "gsync.msg.selftest.parseError": "構文エラー: {0}",

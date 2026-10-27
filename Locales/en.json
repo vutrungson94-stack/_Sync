@@ -107,6 +107,7 @@
   "gsync.msg.cli.moduleNotFound": "Module not found: {0}",
   "gsync.msg.cli.moduleHint": "Ensure gsync.module.psm1 is in the same directory as gsync.ps1.",
   "gsync.msg.cli.projectNotFound": "Project path not found: {0}",
+  "gsync.msg.cli.workspaceRoot": "This folder only holds the platform tools (_Build, _Sync, _Tests). Point gsync at a project directory instead.",
   "gsync.msg.cli.targetProject": "Target project: {0}",
   "gsync.msg.cli.cannotLoadModule": "Cannot load module: {0}",
   "gsync.msg.selftest.parseError": "PARSE ERROR: {0}",

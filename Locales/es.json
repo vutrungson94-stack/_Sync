@@ -107,6 +107,7 @@
   "gsync.msg.cli.moduleNotFound": "No se encontró el módulo: {0}",
   "gsync.msg.cli.moduleHint": "Asegúrese de que gsync.module.psm1 esté en el mismo directorio que gsync.ps1.",
   "gsync.msg.cli.projectNotFound": "No se encontró la ruta del proyecto: {0}",
+  "gsync.msg.cli.workspaceRoot": "Esta carpeta solo contiene las herramientas de la plataforma (_Build, _Sync, _Tests). Apunte gsync a un directorio de proyecto.",
   "gsync.msg.cli.targetProject": "Proyecto de destino: {0}",
   "gsync.msg.cli.cannotLoadModule": "No se puede cargar el módulo: {0}",
   "gsync.msg.selftest.parseError": "ERROR DE SINTAXIS: {0}",

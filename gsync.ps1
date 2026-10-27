@@ -90,6 +90,18 @@ if ($Project) {
     Write-Host (Get-LocaleMessage -Key 'gsync.msg.cli.targetProject' -MessageArgs @($Project)) -ForegroundColor DarkGray
 }
 
+# Refuse to run against a folder that merely holds the platform tools. Such a
+# folder is not a project; running here is what created stray .gitignore /
+# gsync.config.json files (and worse, git state) outside any project.
+$targetDir = (Get-Location).Path
+$toolFolderNames = @('_Build', '_Sync', '_Tests')
+$holdsPlatformFolders = @($toolFolderNames | Where-Object { Test-Path -LiteralPath (Join-Path $targetDir $_) -PathType Container }).Count -gt 0
+$isPlatformFolder = @((($targetDir -replace '\\', '/') -split '/') | Where-Object { $_ -in $toolFolderNames }).Count -gt 0
+if ($holdsPlatformFolders -and -not $isPlatformFolder) {
+    Write-Host (Get-LocaleMessage -Key 'gsync.msg.cli.workspaceRoot') -ForegroundColor Red
+    exit 1
+}
+
 # Ensure project .gitignore covers gsync/gbuild runtime artifacts. Patterns come
 # from config (project.gitignorePatterns), never hardcoded here.
 try {
