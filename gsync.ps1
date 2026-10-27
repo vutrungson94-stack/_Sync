@@ -97,7 +97,7 @@ $targetDir = (Get-Location).Path
 $toolFolderNames = @('_Build', '_Sync', '_Tests')
 $holdsPlatformFolders = @($toolFolderNames | Where-Object { Test-Path -LiteralPath (Join-Path $targetDir $_) -PathType Container }).Count -gt 0
 $isPlatformFolder = @((($targetDir -replace '\\', '/') -split '/') | Where-Object { $_ -in $toolFolderNames }).Count -gt 0
-if ($holdsPlatformFolders -and -not $isPlatformFolder) {
+if (-not ($Help -or $SelfTest) -and $holdsPlatformFolders -and -not $isPlatformFolder) {
     Write-Host (Get-LocaleMessage -Key 'gsync.msg.cli.workspaceRoot') -ForegroundColor Red
     exit 1
 }
