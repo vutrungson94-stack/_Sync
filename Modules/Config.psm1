@@ -36,12 +36,14 @@ function Get-DefaultConfig {
     $json = @'
 {
   "_readme": "gsync config",
+  "version": "2.1.0",
   "git": {
     "remoteName": "origin",
     "defaultBranchFallback": "main",
     "pullConflictPolicy": "ask",
     "stashWhenWorkingTreeDirty": true,
-    "retryCount": 3
+    "retryCount": 3,
+    "minVersion": "2.20.0"
   },
   "gitignore": {
     "enabled": true,
@@ -75,6 +77,18 @@ function Get-DefaultConfig {
     "url": "",
     "onSuccess": true,
     "onFailure": true
+  },
+  "logging": {
+    "level": "Info",
+    "enableFile": true,
+    "enableConsoleColor": true,
+    "enableJsonLog": true,
+    "maxLogFiles": 10,
+    "maxLogSizeMB": 50
+  },
+  "security": {
+    "enabled": true,
+    "blockOnMatch": true
   }
 }
 '@

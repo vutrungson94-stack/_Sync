@@ -25,7 +25,7 @@ param(
     [switch]$Yes,
     [switch]$No,
     [switch]$DryRun,
-    [string]$ConfigPath = (Join-Path (Get-Location) 'gsync.config.json'),
+    [string]$ConfigPath = 'gsync.config.json',
     [string]$RepoUrl    = '',
     [string]$RemoteName = '',
     [string]$Locale     = 'en'
