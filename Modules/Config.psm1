@@ -97,10 +97,31 @@ function Get-DefaultConfig {
 
 function Import-Config {
     param([string]$Path)
+    # Resolve relative paths against the TOOL root, never the process CWD. This
+    # function bootstrap-writes a default config when the path is missing, so a
+    # CWD-relative 'gsync.config.json' used to materialise a stray copy in
+    # whatever folder gsync was launched from (typically the workspace root that
+    # holds _Build/_Sync/_Tests). $PSScriptRoot here is <tool>/Modules.
+    $toolRoot = Split-Path -Parent $PSScriptRoot
+    if ([string]::IsNullOrWhiteSpace($Path)) { $Path = Join-Path $toolRoot 'gsync.config.json' }
+    elseif (-not [System.IO.Path]::IsPathRooted($Path)) { $Path = Join-Path $toolRoot $Path }
     if (-not (Test-Path $Path)) {
         Write-Log (Get-LocaleMessage -Key 'gsync.msg.config.notFound') -Level Info
         $cfg = Get-DefaultConfig
         try {
+            # Never CREATE a config outside the tool root or the project being
+            # synced: those are the files nobody owns. Existing files are still
+            # read normally; only the bootstrap write is constrained.
+            $parent = Split-Path -Parent $Path
+            $projectRoot = (Get-Location).Path
+            $sep = [System.IO.Path]::DirectorySeparatorChar
+            $insideTool = $parent -and ($parent -eq $toolRoot -or $parent.StartsWith($toolRoot + $sep))
+            $insideProject = $parent -and ($parent -eq $projectRoot -or $parent.StartsWith($projectRoot + $sep))
+            if (-not ($insideTool -or $insideProject)) {
+                Write-Warn ("Refusing to create config outside the tool/project root: {0}" -f $Path)
+                $script:CurrentConfig = $cfg
+                return $cfg
+            }
             $jsonOut = $cfg | ConvertTo-Json -Depth 10
             [System.IO.File]::WriteAllText($Path, $jsonOut, [System.Text.UTF8Encoding]::new($false))
             Write-Log (Get-LocaleMessage -Key 'gsync.msg.config.created' -MessageArgs @($Path)) -Level Success

@@ -90,6 +90,20 @@ if ($Project) {
     Write-Host (Get-LocaleMessage -Key 'gsync.msg.cli.targetProject' -MessageArgs @($Project)) -ForegroundColor DarkGray
 }
 
+# Resolve -ConfigPath ONCE, to an absolute path, before anything can bootstrap a
+# default file. A relative value used to resolve against whatever directory the
+# process happened to have as CWD, and Config.Import-Config writes a default
+# config when the path is missing - which is how a stray gsync.config.json
+# appeared in the workspace that merely holds _Build/_Sync/_Tests.
+#   * omitted            -> the tool's own config  (<tool root>/gsync.config.json)
+#   * relative           -> relative to the PROJECT being synced, not the launcher
+#   * absolute           -> used as given
+if ([string]::IsNullOrWhiteSpace($ConfigPath)) {
+    $ConfigPath = Join-Path $PSScriptRoot 'gsync.config.json'
+} elseif (-not [System.IO.Path]::IsPathRooted($ConfigPath)) {
+    $ConfigPath = Join-Path (Get-Location).Path $ConfigPath
+}
+
 # Refuse to run against a folder that merely holds the platform tools. Such a
 # folder is not a project; running here is what created stray .gitignore /
 # gsync.config.json files (and worse, git state) outside any project.
@@ -117,8 +131,10 @@ try {
           # _Sync/, _Tests/). Writing them into a TOOL's own .gitignore makes
           # the tool ignore its own source, and the repository then commits
           # none of the code. The auto-add therefore only runs for a real
-          # project directory, never for a platform tool folder or for the
-          # workspace root that holds them.
+          # project directory: never for a platform tool folder, and never for
+          # a workspace root that merely HOLDS those folders (that second
+          # condition was the missing half - the patterns were stripped but the
+          # file was still written into the workspace root).
           $toolFolderNames = @('_Build', '_Sync', '_Tests')
           $targetDir = (Get-Location).Path
           $resolvedTarget = $null
@@ -130,7 +146,7 @@ try {
           if ($holdsPlatformFolders -and -not $isPlatformFolder) {
               $patterns = @($patterns | Where-Object { ([string]$_).Trim().TrimEnd('/') -notin $toolFolderNames })
           }
-          if ($patterns.Count -gt 0 -and -not $isPlatformFolder) {
+          if ($patterns.Count -gt 0 -and -not $isPlatformFolder -and -not $holdsPlatformFolders) {
               $gi = Join-Path $targetDir '.gitignore'
               $existingText = ''
               if (Test-Path -LiteralPath $gi -PathType Leaf) { $existingText = [System.IO.File]::ReadAllText($gi) }

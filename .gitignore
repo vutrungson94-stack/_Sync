@@ -47,3 +47,13 @@ secrets.*
 *.pem
 sync-outputs/
 coverage.xml
+
+# --- merged from the stray workspace-root .gitignore (2026-10-28) ---
+# gsync used to append its project patterns to whatever CWD it was launched
+# from, which put these four test-output filters in the workspace root. They
+# are preserved here rather than deleted; the auto-append now refuses to write
+# into a folder that merely holds the platform tools.
+test-*.txt
+test-out*.txt
+*-output.txt
+test-final.txt
