@@ -122,7 +122,9 @@ function Show-LargeFiles {
     $count = $Files.Count
     for ($i = 0; $i -lt [Math]::Min($count, $MaxDisplay); $i++) {
         $f = $Files[$i]
-        Write-SubLog (Get-LocaleMessage -Key 'gsync.msg.cleanup.largeFile' -MessageArgs @($($f.Name))) "$([Math]::Round($f.Length/1MB,2)) MB" (Resolve-SafeColor -ColorName 'Warn' -Fallback 'Yellow')
+        $label = Get-LocaleMessage -Key 'gsync.msg.cleanup.largeFile' -MessageArgs @($f.Name)
+        $sizeMB = [Math]::Round($f.Length/1MB, 2)
+        Write-Host "$label : $sizeMB MB" -ForegroundColor (Resolve-SafeColor -ColorName 'Warn' -Fallback 'Yellow')
     }
     if ($count -gt $MaxDisplay) {
         Write-Host (Get-LocaleMessage -Key 'gsync.msg.cleanup.moreFiles' -MessageArgs @($($count - $MaxDisplay))) -ForegroundColor (Resolve-SafeColor -ColorName 'Gray' -Fallback 'DarkGray')
