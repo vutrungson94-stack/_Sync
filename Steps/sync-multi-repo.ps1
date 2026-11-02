@@ -41,8 +41,11 @@ foreach ($repo in $config.repos) {
     $repoPath = $repo.path
     if (-not $repoPath) { Write-Warning (Get-LocaleMessage -Key 'gsync.msg.multiRepo.skipNoPath'); continue }
     if (-not (Test-Path $repoPath)) { Write-Warning (Get-LocaleMessage -Key 'gsync.msg.multiRepo.pathNotFound' -MessageArgs @($repoPath)); continue }
-    $gsyncScript = Join-Path (Join-Path $repoPath '_Sync') 'gsync.ps1'
-    if (-not (Test-Path $gsyncScript)) {
+    $gsyncScript = $null
+    foreach ($candidate in @((Join-Path $repoPath 'gsync.ps1'), (Join-Path (Join-Path $repoPath '_Sync') 'gsync.ps1'))) {
+        if (Test-Path -LiteralPath $candidate) { $gsyncScript = $candidate; break }
+    }
+    if (-not $gsyncScript) {
         Write-Host (Get-LocaleMessage -Key 'gsync.msg.multiRepo.noGsync' -MessageArgs @($repoPath)) -ForegroundColor DarkGray
         continue
     }
