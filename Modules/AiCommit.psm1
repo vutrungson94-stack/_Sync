@@ -1,4 +1,4 @@
-﻿#Requires -Version 5.1
+#Requires -Version 5.1
 # AiCommit.psm1 - Commit summary with optional free AI providers and a
 # conventional-commit heuristic fallback. No paid API key is required: it
 # auto-detects GitHub Models (via the git credential store / gh CLI) and a
