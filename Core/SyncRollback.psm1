@@ -39,9 +39,25 @@ if ($PSVersionTable.PSVersion.Major -ge 7) {
             # untracked files AT SNAPSHOT TIME is recorded, so the restore can
             # tell "this file existed before the snapshot" from "this file
             # appeared after it" and remove only the latter.
+            #
+            # The LIST alone is not enough: without the CONTENTS a restore
+            # deleted the operator's pre-existing untracked files and could
+            # never bring them back (QPM-2026-003). Copy every untracked file
+            # into <snapshot>/untracked/ preserving its relative path; the
+            # restore copies them back after the post-snapshot cleanup.
             try {
                 $untracked = @(& git ls-files --others --exclude-standard 2>$null)
                 Set-Content -LiteralPath (Join-Path $snapshotDir 'untracked.txt') -Value $untracked -Encoding utf8
+                $untrackedDir = Join-Path $snapshotDir 'untracked'
+                foreach ($f in $untracked) {
+                    if ([string]::IsNullOrWhiteSpace($f)) { continue }
+                    try {
+                        $dest = Join-Path $untrackedDir $f
+                        $destParent = Split-Path -Parent $dest
+                        if ($destParent) { New-Item -ItemType Directory -Path $destParent -Force | Out-Null }
+                        Copy-Item -LiteralPath $f -Destination $dest -Force -ErrorAction Stop
+                    } catch { }
+                }
             } catch { }
 
             return $snapshot
@@ -85,7 +101,13 @@ if ($PSVersionTable.PSVersion.Major -ge 7) {
                 if ($diffContent -and $diffContent.Trim()) {
                     $stashErr = & git stash 2>&1
                     if ($LASTEXITCODE -ne 0 -and $logger) { $logger.Warn("Stash before restore failed: $stashErr") }
-                    $applyErr = & git apply $diffFile 2>&1
+                    # --index is REQUIRED. A plain `git apply` leaves a
+                    # rename/new-file target UNTRACKED, and the
+                    # Remove-GSyncPostSnapshotUntracked step below then deletes
+                    # it as "created after the snapshot" - the exact failure
+                    # that destroyed the Orchestrator move. Applying to the
+                    # index makes the restored paths tracked before cleanup.
+                    $applyErr = & git apply --index $diffFile 2>&1
                     if ($LASTEXITCODE -ne 0) {
                         if ($logger) { $logger.Error("Failed to apply snapshot diff: $applyErr") }
                         return $false
@@ -107,6 +129,35 @@ if ($PSVersionTable.PSVersion.Major -ge 7) {
             $removed = Remove-GSyncPostSnapshotUntracked -SnapshotDir $snapshotDir -WorkingDir ([string]$snapshot.WorkingDir)
             if ($removed.Count -gt 0 -and $logger) {
                 $logger.Info((Format-Message -Category Rollback -Key DiffApplied))
+            }
+
+            # Restore the CONTENTS of the files that were untracked when the
+            # snapshot was taken. They are not part of working.diff, and the
+            # cleanup above deliberately leaves them alone; without this step
+            # a restore still loses every pre-existing untracked file.
+            $untrackedDir = Join-Path $snapshotDir 'untracked'
+            if (Test-Path -LiteralPath $untrackedDir -PathType Container) {
+                $restoredUntracked = 0
+                # NORMALIZE THE ROOT. Join-Path does not expand Windows 8.3
+                # aliases, while Get-ChildItem reports long names, so a root
+                # like ...\DVLPRO~1\... and a child like ...\dvlproeng-02\...
+                # made Substring() start mid-segment: the file was restored to
+                # a garbage path ("cked\untracked.txt") and the real one never
+                # reappeared. Get-Item returns the canonical long path.
+                $untrackedRoot = (Get-Item -LiteralPath $untrackedDir -ErrorAction Stop).FullName
+                foreach ($uf in @(Get-ChildItem -LiteralPath $untrackedDir -Recurse -File -ErrorAction SilentlyContinue)) {
+                    try {
+                        $ufFull = (Get-Item -LiteralPath $uf.FullName -ErrorAction Stop).FullName
+                        if ($ufFull.Length -le $untrackedRoot.Length) { continue }
+                        $rel = $ufFull.Substring($untrackedRoot.Length).TrimStart([char]'\', [char]'/')
+                        $dest = Join-Path ([string]$snapshot.WorkingDir) $rel
+                        $destParent = Split-Path -Parent $dest
+                        if ($destParent) { New-Item -ItemType Directory -Path $destParent -Force | Out-Null }
+                        Copy-Item -LiteralPath $uf.FullName -Destination $dest -Force -ErrorAction Stop
+                        $restoredUntracked++
+                    } catch { }
+                }
+                if ($restoredUntracked -gt 0 -and $logger) { $logger.Info("Restored $restoredUntracked untracked file(s)") }
             }
 
             if ($logger) { $logger.Success((Format-Message -Category Rollback -Key Restored -Arguments $snapshotId)) }
@@ -219,10 +270,21 @@ Set-StrictMode -Version 1.0
     }
     $snapshot | ConvertTo-Json -Depth 5 | Set-Content (Join-Path $snapshotDir 'snapshot.json') -Encoding utf8
     & git diff HEAD > (Join-Path $snapshotDir 'working.diff') 2>$null
-    # UNTRACKED FILES - see the comment in the PS 7 branch above.
+    # UNTRACKED FILES - see the comment in the PS 7 branch above. Record the
+    # list AND copy the contents; a list alone cannot restore them.
     try {
         $untracked = @(& git ls-files --others --exclude-standard 2>$null)
         Set-Content -LiteralPath (Join-Path $snapshotDir 'untracked.txt') -Value $untracked -Encoding utf8
+        $untrackedDir = Join-Path $snapshotDir 'untracked'
+        foreach ($f in $untracked) {
+            if ([string]::IsNullOrWhiteSpace($f)) { continue }
+            try {
+                $dest = Join-Path $untrackedDir $f
+                $destParent = Split-Path -Parent $dest
+                if ($destParent) { New-Item -ItemType Directory -Path $destParent -Force | Out-Null }
+                Copy-Item -LiteralPath $f -Destination $dest -Force -ErrorAction Stop
+            } catch { }
+        }
     } catch { }
     return $snapshot
 }
@@ -270,7 +332,9 @@ function Restore-SyncSnapshot {
         if ($diffContent -and $diffContent.Trim()) {
             $stashErr = & git stash 2>&1
             if ($LASTEXITCODE -ne 0 -and $Logger) { $Logger.Warn("Stash before restore failed: $stashErr") }
-            $applyErr = & git apply $diffFile 2>&1
+            # --index keeps restored renames/new files tracked; see the PS 7
+            # branch above for why a plain apply loses them.
+            $applyErr = & git apply --index $diffFile 2>&1
             if ($LASTEXITCODE -ne 0) {
                 if ($Logger) { $Logger.Error("Failed to apply snapshot diff: $applyErr") }
                 return $false
@@ -288,6 +352,24 @@ function Restore-SyncSnapshot {
     }
     # Remove the untracked files that appeared AFTER the snapshot.
     $null = Remove-GSyncPostSnapshotUntracked -SnapshotDir $snapshotDir -WorkingDir ([string]$snapshot.WorkingDir)
+    # Restore the CONTENTS of files that were untracked at snapshot time.
+    $untrackedDir = Join-Path $snapshotDir 'untracked'
+    if (Test-Path -LiteralPath $untrackedDir -PathType Container) {
+        # Normalize the root: see the PS 7 branch above. An 8.3 alias in the
+        # snapshot path corrupts the Substring-based relative path.
+        $untrackedRoot = (Get-Item -LiteralPath $untrackedDir -ErrorAction Stop).FullName
+        foreach ($uf in @(Get-ChildItem -LiteralPath $untrackedDir -Recurse -File -ErrorAction SilentlyContinue)) {
+            try {
+                $ufFull = (Get-Item -LiteralPath $uf.FullName -ErrorAction Stop).FullName
+                if ($ufFull.Length -le $untrackedRoot.Length) { continue }
+                $rel = $ufFull.Substring($untrackedRoot.Length).TrimStart([char]'\', [char]'/')
+                $dest = Join-Path ([string]$snapshot.WorkingDir) $rel
+                $destParent = Split-Path -Parent $dest
+                if ($destParent) { New-Item -ItemType Directory -Path $destParent -Force | Out-Null }
+                Copy-Item -LiteralPath $uf.FullName -Destination $dest -Force -ErrorAction Stop
+            } catch { }
+        }
+    }
     if ($Logger) { $Logger.Success("Restored snapshot: $SnapshotId") }
     return $true
 }

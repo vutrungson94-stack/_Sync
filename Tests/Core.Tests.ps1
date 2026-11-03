@@ -101,4 +101,44 @@ Describe "SyncRollback" -Skip:$(-not $isClassSafe) {
         $content.Label | Should -Be "json_test"
         Remove-Item $snapDir -Recurse -Force -ErrorAction SilentlyContinue
     }
+
+    It "Restores a rename target and a pre-existing untracked file (data-loss regression)" {
+        # QPM-2026-003: Restore-SyncSnapshot ran a plain `git apply`, which
+        # leaves a rename/new-file target UNTRACKED; the post-snapshot cleanup
+        # then deleted it as "created after the snapshot". The untracked files
+        # themselves were listed but never copied, so a restore also lost their
+        # contents. Both are asserted here against a real temporary repository.
+        $repo = Join-Path $env:TEMP "gsync_restore_$(New-Guid)"
+        $snapDir = Join-Path $env:TEMP "gsync_snap_restore_$(New-Guid)"
+        $null = New-Item -ItemType Directory -Path $repo -Force
+        Push-Location $repo
+        try {
+            & git init -q 2>&1 | Out-Null
+            & git config user.email 'test@test.local'
+            & git config user.name 'test'
+            Set-Content -LiteralPath 'a.txt' -Value 'alpha' -NoNewline
+            & git add -A
+            & git commit -qm init
+            $null = New-Item -ItemType Directory -Path 'sub' -Force
+            & git mv 'a.txt' 'sub/a.txt'
+            Set-Content -LiteralPath 'sub/a.txt' -Value 'alpha-mod' -NoNewline
+            Set-Content -LiteralPath 'untracked.txt' -Value 'keep-me' -NoNewline
+            $snap = New-SyncSnapshot -Label 'restore' -SnapshotsDir $snapDir
+
+            & git reset --hard -q HEAD
+            & git clean -fdq
+            Test-Path 'sub/a.txt' | Should -BeFalse
+            Test-Path 'untracked.txt' | Should -BeFalse
+
+            $ok = Restore-SyncSnapshot -SnapshotId $snap.Id -SnapshotsDir $snapDir
+            $ok | Should -BeTrue
+            Test-Path 'sub/a.txt' | Should -BeTrue -Because 'a restored rename target must not be deleted as post-snapshot untracked'
+            (Get-Content -LiteralPath 'sub/a.txt' -Raw) | Should -Be 'alpha-mod'
+            Test-Path 'untracked.txt' | Should -BeTrue -Because 'untracked file contents must be snapshotted and restored'
+            (Get-Content -LiteralPath 'untracked.txt' -Raw) | Should -Be 'keep-me'
+        } finally {
+            Pop-Location
+            Remove-Item -LiteralPath $repo, $snapDir -Recurse -Force -ErrorAction SilentlyContinue
+        }
+    }
 }
