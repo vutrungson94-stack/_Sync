@@ -181,5 +181,3 @@ function New-AiCommitSummary {
 }
 
 Export-ModuleMember -Function @('New-AiCommitSummary')
-
-# End of AiCommit.psm1
