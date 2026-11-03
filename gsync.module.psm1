@@ -651,12 +651,6 @@ function Start-GSync {
 
     $aiEnabled = $false
     $aiLocale = 'en'
-    try {
-        if ($cfg.autoCommit -and $cfg.autoCommit.ai -and $cfg.autoCommit.ai.enabled) {
-            $aiEnabled = $true
-            if ($cfg.autoCommit.ai.locale) { $aiLocale = [string]$cfg.autoCommit.ai.locale }
-        }
-    } catch { }
     if (-not (Get-Command New-AiCommitSummary -ErrorAction SilentlyContinue)) {
         # The module lives in Modules/, NOT in the tool root. The old path
         # (Join-Path $PSScriptRoot 'AiCommit.psm1') never existed, so the
@@ -666,6 +660,21 @@ function Start-GSync {
         # module uses.
         $aiPath = Join-Path $modulesDir 'AiCommit.psm1'
         if (Test-Path -LiteralPath $aiPath) { Import-Module $aiPath -Force -DisableNameChecking -Scope Global -ErrorAction SilentlyContinue }
+    }
+    # AI commit is ON by default when the module is available: it degrades to
+    # a deterministic heuristic when no provider (GitHub Models / Ollama) is
+    # reachable, so it never makes a commit worse. An explicit
+    # autoCommit.ai.enabled = false in the config opts out.
+    $explicitlyDisabled = $false
+    try {
+        if ($cfg.autoCommit -and $cfg.autoCommit.ai -and ($cfg.autoCommit.ai.PSObject.Properties.Name -contains 'enabled') -and -not $cfg.autoCommit.ai.enabled) {
+            $explicitlyDisabled = $true
+        }
+        if ($cfg.autoCommit -and $cfg.autoCommit.ai -and $cfg.autoCommit.ai.locale) { $aiLocale = [string]$cfg.autoCommit.ai.locale }
+    } catch { }
+    if (-not $explicitlyDisabled -and (Get-Command New-AiCommitSummary -ErrorAction SilentlyContinue)) {
+        $aiEnabled = $true
+        if ([string]::IsNullOrWhiteSpace($aiLocale)) { $aiLocale = 'en' }
     }
     if ($aiEnabled -and (Get-Command New-AiCommitSummary -ErrorAction SilentlyContinue)) {
         $suggestion = New-AiCommitSummary -ChangedFiles @($staged) -Locale $aiLocale -Config $cfg
