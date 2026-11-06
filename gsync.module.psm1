@@ -450,7 +450,7 @@ function Start-GSync {
         if ($DryRun) {
             Write-Log (Get-LocaleMessage -Key 'gsync.msg.dryRun.skipGitignore') -Level Info
         } else {
-            Update-Gitignore -Rules $cfg.gitignore.rulesToAdd
+            Update-Gitignore -Rules $cfg.gitignore.rulesToAdd -WorkingDir (Get-Location).Path
         }
     }
     if ($cfg.junkCleanup.enabled) {

@@ -350,6 +350,13 @@ function Update-Gitignore {
     )
     if (-not $Rules -or $Rules.Count -eq 0) { return $false }
     $dir = if ($WorkingDir) { $WorkingDir } else { (Get-Location).Path }
+    # Anti-leak guard: never write a .gitignore into a workspace root that merely
+    # holds the platform tool folders. Such a folder is not a project and writing
+    # there is exactly how a stray .gitignore escapes the _Sync system.
+    $toolFolderNames = @('_Build', '_Sync', '_Tests')
+    $holdsPlatformFolders = @($toolFolderNames | Where-Object { Test-Path -LiteralPath (Join-Path $dir $_) -PathType Container }).Count -gt 0
+    $isPlatformFolder = @((($dir -replace '\\', '/') -split '/') | Where-Object { $_ -in $toolFolderNames }).Count -gt 0
+    if ($holdsPlatformFolders -and -not $isPlatformFolder) { return $false }
     $gitignore = Join-Path $dir '.gitignore'
     $existing = @()
     if (Test-Path -LiteralPath $gitignore) {
